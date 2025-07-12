@@ -1,0 +1,56 @@
+.help-form-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #fff7f2;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.help-form-container h2 {
+  text-align: center;
+  color: #B67233;
+  margin-bottom: 25px;
+}
+
+.help-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #444;
+}
+
+.form-group input,
+.form-group select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  outline-color: #B67233;
+}
+
+.submit-btn {
+  padding: 12px;
+  background-color: #B67233;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.submit-btn:hover {
+  background-color: #822121;
+}
