@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import './HelpChooseForm.css';
+import { useState } from 'react';
+import './ContactUs.css';
 
-const HelpChooseForm = () => {
+const ContactUs = () => {
   const [formData, setFormData] = useState({
     name: '',
     mobile: '',
@@ -217,4 +217,4 @@ const HelpChooseForm = () => {
   );
 };
 
-export default HelpChooseForm;
+export default ContactUs;
