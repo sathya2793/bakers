@@ -1,0 +1,27 @@
+{
+  "files": {
+    "main.css": "/bakers/static/css/main.5aca8f2f.css",
+    "main.js": "/bakers/static/js/main.10e3dfe8.js",
+    "static/js/453.6025b47b.chunk.js": "/bakers/static/js/453.6025b47b.chunk.js",
+    "static/media/vani.jpg": "/bakers/static/media/vani.516be73471c658c56b6c.jpg",
+    "static/media/abstract01.jpg": "/bakers/static/media/abstract01.78fde571a602a65ddec0.jpg",
+    "static/media/fruite_cake.jpg": "/bakers/static/media/fruite_cake.0810dcbf1c5caaff95c5.jpg",
+    "static/media/abstract03.jpg": "/bakers/static/media/abstract03.3367d355d535384c5c1b.jpg",
+    "static/media/abstract02.jpg": "/bakers/static/media/abstract02.195fea2a193654478f82.jpg",
+    "static/media/whatsapp.jpg": "/bakers/static/media/whatsapp.fe60cdcd9cf9148226f2.jpg",
+    "static/media/red_velvet_cakes.jpg": "/bakers/static/media/red_velvet_cakes.a9bf0a900f4d089af3ec.jpg",
+    "static/media/chocolate_cakes.jpg": "/bakers/static/media/chocolate_cakes.37c71cae59182ef41c7a.jpg",
+    "static/media/slick.svg": "/bakers/static/media/slick.2630a3e3eab21c607e21.svg",
+    "static/media/slick.eot": "/bakers/static/media/slick.a4e97f5a2a64f0ab1323.eot",
+    "static/media/slick.ttf": "/bakers/static/media/slick.c94f7671dcc99dce43e2.ttf",
+    "static/media/slick.woff": "/bakers/static/media/slick.295183786cd8a1389865.woff",
+    "index.html": "/bakers/index.html",
+    "main.5aca8f2f.css.map": "/bakers/static/css/main.5aca8f2f.css.map",
+    "main.10e3dfe8.js.map": "/bakers/static/js/main.10e3dfe8.js.map",
+    "453.6025b47b.chunk.js.map": "/bakers/static/js/453.6025b47b.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.5aca8f2f.css",
+    "static/js/main.10e3dfe8.js"
+  ]
+}
