@@ -1,132 +1,132 @@
-.home {
+.home-hero {
   font-family: 'Poppins', sans-serif;
-  line-height: 1.6;
-  color: #333;
+  background: #f1f8f4;
+  color: #2b2b2b;
+  padding: 60px 2%;
 }
 
-/* Hero */
 .hero {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 80px 5%;
-  background: linear-gradient(135deg, #a9d4ab, #9fc498);
+  gap: 40px;
   flex-wrap: wrap;
+  padding: 0px 5%;
+  background: linear-gradient(135deg, #a9d4ab, #9fc498);
 }
 
 .hero-text {
-  flex: 1;
-  min-width: 300px;
+  max-width: 50%;
 }
 
-.hero-text h1 {
-  font-size: 2.8rem;
-  color: #256d40;
-  text-align: left;
+.subtitle {
+  color: #1f3c2e;
+  font-size: 20px;
+  font-weight: 500;
 }
 
-.hero-text p {
-  margin: 20px 0;
-  font-size: 1.3em;
-  max-width: 500px;
+.title {
+  font-size: 34px;
+  font-weight: 700;
+  margin: 10px 0;
+  color: #1f3c2e;
 }
 
-.hero-btn {
-  padding: 12px 30px;
-  background: #256d40;
-  color: #fff;
-  border: none;
-  border-radius: 25px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.3s ease;
+.description {
+  font-size: 18px;
+  color: #4b4b4b;
+  line-height: 1.6;
 }
 
-.hero-btn:hover {
-  background: #1e5733;
+.hero-image {
+  position: relative;
+  max-width: 40%;
 }
 
 .hero-image img {
-  max-width: 400px;
+  width: 100%;
   border-radius: 12px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
 }
 
-/* Sections */
-.section {
-  padding: 60px 5%;
-  text-align: center;
+.cake-label {
+  position: absolute;
+  bottom: -20px;
+  left: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
-.section h2 {
-  font-size: 2rem;
-  color: #b57233;
-  margin-bottom: 40px;
+.cake-label h2 {
+  font-size: 20px;
+  margin: 0 0 8px;
+  color: #1a3c29;
 }
 
-.occasion-section {
-  background: #e6f1e5;
+.cake-label p {
+  font-size: 14px;
+  color: #666;
 }
 
-.occasion-section h2{
-  color: #B67233;
-}
-.products-section {
-  background: #9fc599;
-}
-
-.custom-section {
-  background: #9fc599;
-}
-
-/* WhatsApp Section */
-.whatsapp-section {
-  background: #e0f4e7;
-  padding: 60px 5%;
-  text-align: center;
-}
-
-.chat-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 30px;
-}
-
-.chat-image {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-}
-
-.whatsapp-btn {
-  background: #25d366;
-  color: white;
-  padding: 12px 28px;
-  border-radius: 30px;
-  font-weight: 600;
+.know-more {
+  margin-top: 10px;
+  display: inline-block;
+  color: #619c6c;
+  font-weight: 500;
   text-decoration: none;
-  transition: background 0.3s ease;
 }
 
-.whatsapp-btn:hover {
-  background: #1da851;
+.top-cakes-section {
+  margin-top: 80px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .hero {
-    flex-direction: column;
-    text-align: center;
-  }
+.top-cakes-section h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  color: #b67233;
+}
 
-  .hero-image img {
-    max-width: 100%;
-    margin-top: 30px;
-  }
+.scroll-wrapper {
+  overflow: hidden;
+  position: relative;
+}
 
-  .chat-content {
-    flex-direction: column;
-  }
+.scroll-row {
+  display: flex;
+  gap: 20px;
+  animation: scrollLoop 20s linear infinite;
+  width: max-content;
+}
+
+.cake-card {
+  min-width: 180px;
+  background: white;
+  padding: 15px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.cake-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+.cake-card p {
+  font-size: 16px;
+  font-weight: 500;
+  color: #2b2b2b;
+}
+
+/* Scroll animation */
+@keyframes scrollLoop {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
 }
