@@ -10,7 +10,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 80px 5%;
-  background: linear-gradient(135deg, #fffaf5, #fef1e9);
+  background: linear-gradient(135deg, #a9d4ab, #9fc498);
   flex-wrap: wrap;
 }
 
@@ -21,19 +21,19 @@
 
 .hero-text h1 {
   font-size: 2.8rem;
-  color: #b67233;
+  color: #256d40;
   text-align: left;
 }
 
 .hero-text p {
   margin: 20px 0;
-  color: #444;
+  font-size: 1.3em;
   max-width: 500px;
 }
 
 .hero-btn {
   padding: 12px 30px;
-  background: #b67233;
+  background: #256d40;
   color: #fff;
   border: none;
   border-radius: 25px;
@@ -43,7 +43,7 @@
 }
 
 .hero-btn:hover {
-  background: #9a5c28;
+  background: #1e5733;
 }
 
 .hero-image img {
@@ -60,25 +60,28 @@
 
 .section h2 {
   font-size: 2rem;
-  color: #b67233;
+  color: #b57233;
   margin-bottom: 40px;
 }
 
 .occasion-section {
-  background: #fff7f2;
+  background: #e6f1e5;
 }
 
+.occasion-section h2{
+  color: #B67233;
+}
 .products-section {
-  background: #fffefb;
+  background: #9fc599;
 }
 
 .custom-section {
-  background: #fdf4ea;
+  background: #9fc599;
 }
 
 /* WhatsApp Section */
 .whatsapp-section {
-  background: #e5f6ed;
+  background: #e0f4e7;
   padding: 60px 5%;
   text-align: center;
 }

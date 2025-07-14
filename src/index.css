@@ -2,7 +2,7 @@ body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
   padding: 0;
-  background: #f7f4ee;
+  background: #e6f1e5;
   width: 100vw;
   height: 100vh;
   overflow-x: hidden;
@@ -20,12 +20,6 @@ section {
   margin: 0 auto;
 }
 
-.banner {
-  background-color: #99b58d;
-  padding: 40px 20px;
-  text-align: center;
-}
-
 .product-grid {
   display: flex;
   flex-wrap: wrap;
@@ -35,8 +29,8 @@ section {
 
 .product-card {
   width: 250px;
-  background: #fff;
-  color: #B67233;
+  background: #f7f4ee;
+  color: #256d40;
   border-radius: 8px;
   padding: 15px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -52,7 +46,7 @@ section {
 .product-btn {
   margin-top: 12px;
   padding: 10px 20px;
-  background-color: #a52a2a;
+  background-color:#256d40;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -63,7 +57,7 @@ section {
 }
 
 .product-btn:hover {
-  background-color: #b67233;
+  background-color: #1e5733;
   transform: scale(1.05);
 }
 

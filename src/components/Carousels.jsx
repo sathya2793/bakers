@@ -9,7 +9,7 @@ import abstract03 from '../assets/abstract03.jpg';
 const Carousels = () => {
 
   const settings = {
-    dots: true,
+    dots: false,
     lazyLoad: true,
     infinite: true,
     speed: 500,
@@ -20,7 +20,7 @@ const Carousels = () => {
   };
   const baseUrl = "../assets";
   return (
-    <div className="slider-container">
+    <div className="banner slider-container">
       <Slider {...settings}>
         <div>
           <img src={abstract01} />
