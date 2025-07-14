@@ -26,14 +26,14 @@
 }
 
 .title {
-  font-size: 34px;
+  font-size: 1.7em;
   font-weight: 700;
   margin: 10px 0;
   color: #1f3c2e;
 }
 
 .description {
-  font-size: 18px;
+  font-size: 1em;
   color: #4b4b4b;
   line-height: 1.6;
 }
