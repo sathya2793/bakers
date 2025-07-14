@@ -15,7 +15,7 @@ import WhyChooseUs from '../components/WhyChooseUs';
 import OurServices from '../components/OurServices';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
-
+import layer_cake from "../assets/layer_cake.png"
 const Home = () => {
   useEffect(() => {
     AOS.init({ duration: 1000 });
@@ -43,11 +43,19 @@ const Home = () => {
     { img: custom2, buttonName: "PHOTOSHEET CAKES" }
   ];
 
+  const topCakes = [
+    { name: 'Chocolate Truffle', image: chocolate_cakes },
+    { name: 'Red Velvet', image: red_velvet_cakes },
+    { name: 'Black Forest', image: fruite_cake },
+    { name: 'Strawberry Swirl', image: chocolate_cakes },
+    { name: 'Vanilla Delight', image: fruite_cake }
+  ];
+
   return (
     <div className="home">
       <Carousels />
 
-      <div className="hero" data-aos="fade-up">
+      {/* <div className="hero" data-aos="fade-up">
         <div className="hero-text">
           <h1>Celebration Cakes Crafted with Love</h1>
           <p>Handmade, custom, and delivered with sweetness across TamilNadu.</p>
@@ -56,7 +64,39 @@ const Home = () => {
         <div className="hero-image">
           <img src={custom2} alt="Layered Cake" />
         </div>
+      </div> */}
+
+      <div className="home-hero">
+      <div className="hero">
+        <div className="hero-text">
+          <p className="subtitle">Baked with love.</p>
+          <h1 className="title">Explore the delightful world of cakes</h1>
+          <p className="description">
+            Indulge in handcrafted cakes for every celebration — each one made to bring joy, sweetness, and unforgettable memories. Whether it’s a birthday, anniversary, or just a moment worth savoring, our cakes turn ordinary days into something extraordinary.
+          </p>
+        </div>
+        <div className="hero-image">
+          <img src={layer_cake} alt="Layered Cake" />
+          {/* <div className="cake-label">
+            <h2>Belgian Choco Lava</h2>
+            <p>One of our top-selling premium cakes.</p>
+            <a href="#" className="know-more">Know more →</a>
+          </div> */}
+        </div>
       </div>
+
+      <div className="top-cakes-section scroll-wrapper">
+        <h3>Top 5 of the week</h3>
+        <div className="scroll-row">
+          {topCakes.map((cake, index) => (
+            <div className="cake-card" key={index}>
+              <img src={cake.image} alt={cake.name} />
+              <p>{cake.name}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
 
       <section className="section occasion-section" data-aos="fade-up">
         <h2>Treats For Any Occasion</h2>
