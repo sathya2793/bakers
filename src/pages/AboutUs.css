@@ -46,12 +46,12 @@
   margin-top: 10px;
   font-style: italic;
   font-size: 0.95rem;
-  color: #f7f4ee;
+  color: #000;
 }
 
 .about-text {
   flex: 2 1 500px;
-  color: #f7f4ee;
+  color: #000;
 }
 
 .about-text h2 {
@@ -67,9 +67,11 @@
 .about-text p {
   line-height: 1.6;
   margin-bottom: 15px;
+  color: #000;
 }
 
 .about-text ul {
   margin: 10px 0 0 20px;
   line-height: 1.8;
+  color: #000;
 }
