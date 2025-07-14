@@ -1,13 +1,14 @@
 {
   "files": {
-    "main.css": "/bakers/static/css/main.5aca8f2f.css",
-    "main.js": "/bakers/static/js/main.10e3dfe8.js",
+    "main.css": "/bakers/static/css/main.d16d6116.css",
+    "main.js": "/bakers/static/js/main.7eeeec70.js",
     "static/js/453.6025b47b.chunk.js": "/bakers/static/js/453.6025b47b.chunk.js",
+    "static/media/abstract1.png": "/bakers/static/media/abstract1.e399f5612eb4c72d8e6e.png",
+    "static/media/abstract2.png": "/bakers/static/media/abstract2.143455af60eadc4c1236.png",
+    "static/media/abstract3.png": "/bakers/static/media/abstract3.5ea386d95cfdd317e0bf.png",
+    "static/media/layer_cake.png": "/bakers/static/media/layer_cake.cfbe8f74b9fcdb8fdad7.png",
     "static/media/vani.jpg": "/bakers/static/media/vani.516be73471c658c56b6c.jpg",
-    "static/media/abstract01.jpg": "/bakers/static/media/abstract01.78fde571a602a65ddec0.jpg",
     "static/media/fruite_cake.jpg": "/bakers/static/media/fruite_cake.0810dcbf1c5caaff95c5.jpg",
-    "static/media/abstract03.jpg": "/bakers/static/media/abstract03.3367d355d535384c5c1b.jpg",
-    "static/media/abstract02.jpg": "/bakers/static/media/abstract02.195fea2a193654478f82.jpg",
     "static/media/whatsapp.jpg": "/bakers/static/media/whatsapp.fe60cdcd9cf9148226f2.jpg",
     "static/media/red_velvet_cakes.jpg": "/bakers/static/media/red_velvet_cakes.a9bf0a900f4d089af3ec.jpg",
     "static/media/chocolate_cakes.jpg": "/bakers/static/media/chocolate_cakes.37c71cae59182ef41c7a.jpg",
@@ -16,12 +17,12 @@
     "static/media/slick.ttf": "/bakers/static/media/slick.c94f7671dcc99dce43e2.ttf",
     "static/media/slick.woff": "/bakers/static/media/slick.295183786cd8a1389865.woff",
     "index.html": "/bakers/index.html",
-    "main.5aca8f2f.css.map": "/bakers/static/css/main.5aca8f2f.css.map",
-    "main.10e3dfe8.js.map": "/bakers/static/js/main.10e3dfe8.js.map",
+    "main.d16d6116.css.map": "/bakers/static/css/main.d16d6116.css.map",
+    "main.7eeeec70.js.map": "/bakers/static/js/main.7eeeec70.js.map",
     "453.6025b47b.chunk.js.map": "/bakers/static/js/453.6025b47b.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.5aca8f2f.css",
-    "static/js/main.10e3dfe8.js"
+    "static/css/main.d16d6116.css",
+    "static/js/main.7eeeec70.js"
   ]
 }
