@@ -12,7 +12,6 @@ const ProductCard = ({ name, price, veg, img, link, buttonName, removeBackground
       <img src={img} alt={name} className="product-image" />
       <h3>{name}</h3>
       <p>{price}</p>
-      <span>{veg}</span>
       {buttonName && (
         <button className="product-btn" onClick={handleClick}>
           {buttonName}

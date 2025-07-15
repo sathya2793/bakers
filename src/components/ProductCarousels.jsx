@@ -6,6 +6,7 @@ const ProductCarousels = ({products, removeBackground}) => {
     dots: true,
     infinite: false,
     speed: 500,
+    autoplay: true,
     slidesToShow: 4,
     slidesToScroll: 4,
     initialSlide: 0,

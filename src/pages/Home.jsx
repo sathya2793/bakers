@@ -22,12 +22,12 @@ const Home = () => {
   }, []);
 
   const products = [
-    { name: 'Chocolate Truffle', price: '₹850', veg: '🟢 Veg', img: chocolate_cakes },
-    { name: 'Red Velvet', price: '₹900', veg: '🔴 Egg', img: red_velvet_cakes },
-    { name: 'Fresh Fruit Cake', price: '₹800', veg: '🟢 Veg', img: fruite_cake },
-    { name: 'Chocolate Truffle', price: '₹850', veg: '🟢 Veg', img: chocolate_cakes },
-    { name: 'Red Velvet', price: '₹900', veg: '🔴 Egg', img: red_velvet_cakes },
-    { name: 'Fresh Fruit Cake', price: '₹800', veg: '🟢 Veg', img: fruite_cake },
+    { name: 'Chocolate Truffle', price: '₹850', veg: 'Veg', img: chocolate_cakes },
+    { name: 'Red Velvet', price: '₹900', veg: 'Egg', img: red_velvet_cakes },
+    { name: 'Fresh Fruit Cake', price: '₹800', veg: 'Veg', img: fruite_cake },
+    { name: 'Chocolate Truffle', price: '₹850', veg: 'Veg', img: chocolate_cakes },
+    { name: 'Red Velvet', price: '₹900', veg: 'Egg', img: red_velvet_cakes },
+    { name: 'Fresh Fruit Cake', price: '₹800', veg: 'Veg', img: fruite_cake },
   ];
 
   const customProducts = [
