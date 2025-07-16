@@ -87,14 +87,28 @@ const Home = () => {
 
       <div className="top-cakes-section scroll-wrapper">
         <h3>Top 5 of the week</h3>
-        <div className="scroll-row">
-          {topCakes.map((cake, index) => (
-            <div className="cake-card" key={index}>
-              <img src={cake.image} alt={cake.name} />
-              <p>{cake.name}</p>
+       <div class="card">
+    <div className="scroll-row card__container">
+        {topCakes.map((cake, index) => (
+        <article className="cake-card card__article" key={index}>
+            <div class="card__data">
+                <img src={cake.image} alt={cake.name} class="card__img"/>
+                <h4 class="card__title">{cake.name}</h4>
             </div>
-          ))}
-        </div>
+            <div class="card__shapes">
+                <span class="card__shape"></span>
+                <span class="card__shape"></span>
+                <span class="card__shape"></span>
+                <span class="card__shape"></span>
+                <span class="card__shape"></span>
+                <span class="card__shape"></span>
+                <span class="card__shape"></span>
+                <span class="card__shape"></span>
+            </div>
+        </article>
+        ))}
+    </div>
+</div>
       </div>
     </div>
 

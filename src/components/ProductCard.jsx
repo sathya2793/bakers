@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-
+import "./ProductCard.css"
 const ProductCard = ({ name, price, veg, img, link, buttonName, removeBackground }) => {
   const navigate = useNavigate();
 
