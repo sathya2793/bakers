@@ -1,0 +1,78 @@
+Cake Product Payload Documentation
+[
+  {
+    "id": "cake_001", // Auto-generated unique ID
+    "title": "Mango Mousse Cake",
+    "availableWeights": [
+      { "weight": "0.5kg", "price": 399 },
+      { "weight": "1kg", "price": 749 },
+      { "weight": "2kg", "price": 1399 },
+      { "weight": "5kg", "price": 3499 }
+    ], //"customizable": false,
+    "defaultWeight": "0.5kg", // Default selection for UI //"customizable": false,
+    "flavor": "Mango",
+    "event": ["Birthday", "Summer Special"], // For filtering by occasion
+    "theme": ["Tropical", "Fruity"], // Visual/stylistic cake design
+    "isEggless": false, // Eggless status for dietary filter
+    "availability": "In Stock", // or "Out of Stock"
+    "image_url": ["/images/mango_mousse.jpg", "/images/mango_mousse1.jpg"], // Multiple images for slider/gallery
+    "description": "Fresh mango mousse cake, perfect for summer celebrations.",
+    "ingredients": ["Cream Cheese", "Strawberries", "Sugar", "Graham Crackers"], // Optional, for detailed view
+    "tag": "Best Seller", // Displayed prominently on product card
+    "customizable": true, 
+    "price_range": "1000-2000", //"customizable": true
+    "weights_range": "5-7kg", //"customizable": true
+    "type": "Fresh cream" // Cake base type (Fresh cream, Buttercream, Fondant, etc.)
+  }
+]
+
+UI Layout Guidelines
+
+Product Card UI:
+image_url[0]    --> main product image
+title	Cake name
+tag	Badge (Best Seller, etc.)
+isEggless	Icon indicator
+availableWeights[0].price	---> Display default price
+
+Product Preview / Detailed View:
+image_url[]	---> Image carousel/gallery
+title	---> Main title
+description	---> Subtext or below-title info
+ingredients	Shown ---> bullet/list view
+customizable	--> Pencil icon or text ("Custom message available")
+availableWeights	--> Price chart / weight selector
+
+Optional UI Filter Payload (For Sidebar/Top Filters):
+{
+  "events": [
+    "Birthday", "Anniversary", "Wedding", "Valentine's Day",
+    "Summer Special", "Baby Shower", "Graduation", "Retirement"
+  ],
+  "flavors": [
+    "Chocolate", "Mango", "Strawberry", "Vanilla", "Butterscotch",
+    "Pineapple", "Red Velvet", "Coffee", "Black Forest", "Fruit Mix",
+    "Blueberry"
+  ],
+  "themes": [
+    "Tropical","Fruity","Floral","Romantic","Love","Valentine","Cartoon","Superhero",
+    "Princess","Photo Cake","Number Cake","Alphabet Cake","Rainbow","Galaxy","Unicorn","Mermaid",
+    "Jungle","Animal","Baby Shower","Newborn","Gender Reveal","Cricket","Football","IPL","Graduation",
+    "Back to School","Books","Makeup","Fashion","Luxury","Minimalist","Rustic","Vintage","Gold Foil",
+    "Ombre","3D Cake","Pinata","Pull Me Up","Black Forest Theme","Red Velvet Theme","Chocolate Overload",
+    "Fresh Fruit","Kids Birthday","Bride-to-Be","Anniversary Special","Heart Shape","Tier Cake","Single Layer",
+    "Classic Cream","Fondant Art","Emoji Cake","Festival Special","New Year","Christmas","Eid","Diwali",
+    "Raksha Bandhan","Mother's Day","Father's Day"
+  ],
+  "tags": ["Best Seller", "Limited Offer", "New Arrival"],
+  "weightOptions": ["0.5kg", "1kg", "2kg", "5kg"],
+  "eggless": [true, false],
+  "customizable": [true, false],
+  "priceRange": [
+    "Under ₹500",
+    "₹500 - ₹1000",
+    "₹1000 - ₹2000",
+    "₹2000 - ₹3000",
+    "Above ₹3000"
+  ]
+}
