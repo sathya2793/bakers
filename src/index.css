@@ -27,6 +27,12 @@ section {
   gap: 50px;
 }
 
+.product-container{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
 .product-card {
   width: 250px;
   background: #f7f4ee;

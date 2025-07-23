@@ -6,14 +6,6 @@ import abstract01 from '../assets/abstract1.png';
 import abstract02 from '../assets/abstract2.png';
 import abstract03 from '../assets/abstract3.png';
 
-const topCakes = [
-  { name: 'Chocolate Truffle', image: abstract01 },
-  { name: 'Red Velvet', image: abstract02 },
-  { name: 'Black Forest', image: abstract03 },
-  { name: 'Strawberry Swirl', image: abstract03 },
-  { name: 'Vanilla Delight', image: abstract03 }
-];
-
 const Carousels = () => {
 
   const settings = {
@@ -26,18 +18,17 @@ const Carousels = () => {
     initialSlide: 2,
     autoplay: true
   };
-  const baseUrl = "../assets";
   return (
     <div className="banner slider-container">
       <Slider {...settings}>
         <div>
-          <img src={abstract01} />
+          <img src={abstract01} alt="bg1"/>
         </div>
         <div>
-          <img src={abstract02} />
+          <img src={abstract02} alt="bg2"/>
         </div>
         <div>
-          <img src={abstract03} />
+          <img src={abstract03} alt="bg3"/>
         </div>
       </Slider>
     </div>

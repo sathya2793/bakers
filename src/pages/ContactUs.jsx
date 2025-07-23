@@ -18,7 +18,6 @@ const ContactUs = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -76,7 +75,6 @@ const ContactUs = () => {
       });
 
       if (response.ok) {
-        setSuccess(true);
         alert('Cake request sent successfully!');
         setFormData({
           name: '',
@@ -105,7 +103,6 @@ const ContactUs = () => {
 
 
   return (
-    
     <div className="help-form-container">
       {loading && (
         <div className="loading-overlay">

@@ -1,12 +1,10 @@
 import React, { useEffect } from 'react';
 import './Home.css';
-import ProductCard from '../components/ProductCard';
 import Carousels from '../components/Carousels';
 import Testimonials from '../components/Testimonials';
 import chocolate_cakes from "../assets/chocolate_cakes.jpg";
 import red_velvet_cakes from "../assets/red_velvet_cakes.jpg";
 import fruite_cake from "../assets/fruite_cake.jpg";
-import whatsapp from "../assets/whatsapp.jpg";
 import custom1 from "../assets/custom1.jpg";
 import custom2 from "../assets/custom2.jpg";
 import custom3 from "../assets/custom3.jpg";
@@ -52,6 +50,7 @@ const Home = () => {
   ];
 
   return (
+    <>
     <div className="home">
       <Carousels />
 
@@ -147,6 +146,7 @@ const Home = () => {
         </div>
       </section> */}
     </div>
+    </>
   );
 };
 

@@ -7,7 +7,7 @@ const ProductCard = ({ name, price, veg, img, link, buttonName, removeBackground
     navigate(link);
   };
 
-  return (
+  return ( 
     <div className="product-card" style={removeBackground === "true" ? { background: 'transparent', boxShadow: 'none' } : {}}>
       <img src={img} alt={name} className="product-image" />
       <h3>{name}</h3>

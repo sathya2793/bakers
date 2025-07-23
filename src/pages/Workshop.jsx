@@ -1,3 +1,5 @@
+import "./ComingSoon.css";
+
 const Workshop = () => {
   return (
    <div class="coming-soon">

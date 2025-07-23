@@ -4,6 +4,8 @@
   font-family: 'Inter', 'Poppins';
   background: #f0f9f2;
   padding: 60px 10%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .testimonial-title {
