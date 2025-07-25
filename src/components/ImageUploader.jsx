@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import { 
+  showCompactSuccess,
+  showCompactError
+} from '../utils/notifications';
 
 export default function ImageUploader({ images, onChange }) {
   const [isUploading, setIsUploading] = useState(false);
@@ -18,15 +22,16 @@ export default function ImageUploader({ images, onChange }) {
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        console.error(response)
+        showCompactError('Upload failed');
       }
 
       // Your backend should return JSON with the image URL, e.g., { url: "..." }
       const data = await response.json();
+      showCompactSuccess('Upload successful!');
       onChange([...images, data.url]);
-
     } catch (error) {
-      alert(`Upload failed: ${error.message}`);
+      showCompactError(`Upload failed: ${error.message}`);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);

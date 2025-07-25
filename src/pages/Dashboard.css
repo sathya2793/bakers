@@ -17,11 +17,10 @@
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
+  border: 4px solid #ccc;
   border-radius: 50%;
   border-top: 4px solid white;
   animation: spin 1s linear infinite;
-  margin-bottom: 20px;
 }
 
 @keyframes spin {
@@ -341,7 +340,7 @@
 }
 
 .product-content {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .product-title {
@@ -425,7 +424,7 @@
 .product-actions {
   display: flex;
   gap: 0.5rem;
-  padding: 0 1.5rem 1.5rem;
+  padding: 0rem 1rem 1rem 1rem
 }
 
 .edit-btn, .delete-btn {
@@ -825,4 +824,62 @@ input:checked + .toggle-label:before {
   background: rgba(158, 158, 158, 0.2);
   color: #9e9e9e;
   transform: none;
+}
+
+/* Loading Spinners */
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  border-top: 2px solid white;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+.loading-spinner.small {
+  width: 12px;
+  height: 12px;
+  border-width: 1px;
+  margin-right: 4px;
+}
+
+.loading-spinner.large {
+  width: 40px;
+  height: 40px;
+  border-width: 4px;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 4rem 2rem;
+  color: #666;
+}
+
+/* Disabled Button States */
+.submit-btn:disabled,
+.delete-btn:disabled {
+  opacity: 0.7;
+  display: inline-flex;
+  cursor: not-allowed;
+  text-align: center;
+  align-items: center;
+  transform: none !important;
+}
+
+.submit-btn:disabled:hover,
+.delete-btn:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
 }

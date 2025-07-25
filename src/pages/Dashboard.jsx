@@ -9,7 +9,8 @@ import {
   showWarning,
   showConfirmation,
   showDeleteConfirmation,
-  showCompactSuccess
+  showCompactSuccess,
+  showCompactError
 } from '../utils/notifications';
 const API_BASE_URL = 'https://bakers-backend.vercel.app';
 
@@ -36,6 +37,9 @@ const Dashboard = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     availableWeights: [{ weight: '', price: '' }],
@@ -78,6 +82,12 @@ const Dashboard = () => {
     }
   }, [navigate]);
 
+  useEffect(() => {
+    if (activeSection === 'view' && userInfo) {
+      fetchProducts();
+    }
+  }, [activeSection, userInfo]);
+  
   // Simple logout (remove token and reload)
   const handleLogout = () => {
     localStorage.removeItem('googleToken');
@@ -85,16 +95,20 @@ const Dashboard = () => {
   };
 
   const fetchProducts = async () => {
+    setProductsLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/products`, {
         headers: getAuthHeaders(),
       });
-      if (!response.ok) throw new Error('Failed to fetch');
+      if (!response.ok) console.error('Failed to fetch');
       const data = await response.json();
+      debugger;
       setProducts(data);
     } catch (error) {
       console.error("Error fetching products:", error);
       showError('Failed to fetch products');
+    } finally {
+      setProductsLoading(false);
     }
   };
 
@@ -215,7 +229,7 @@ const handleCustomizableToggle = async (e) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setSubmitLoading(true);
     const productData = { ...formData };
     delete productData.id;
 
@@ -230,10 +244,11 @@ const handleCustomizableToggle = async (e) => {
         });
         
         if (response.ok) {
-          setProducts(products.map((p) => (p.id === editingId ? { ...productData, id: editingId } : p)));
+          const updatedProduct = await response.json();
+          setProducts(products.map((p) => (p.id === editingId ? updatedProduct : p)));
           showSuccess('Product updated successfully!');
         } else {
-          throw new Error('Failed to update product');
+          showCompactError('Failed to update product');
         }
       } else {
         // CREATE logic
@@ -248,7 +263,7 @@ const handleCustomizableToggle = async (e) => {
           setProducts([...products, newProduct]);
           showSuccess('Product created successfully!');
         } else {
-          throw new Error('Failed to create product');
+          showCompactError('Failed to create product');
         }
       }
       
@@ -258,7 +273,9 @@ const handleCustomizableToggle = async (e) => {
 
     } catch (error) {
       console.error('Failed to save product:', error);
-      showError(editingId ? 'Failed to update product' : 'Failed to create product');
+      showCompactError(editingId ? 'Failed to update product' : 'Failed to create product');
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -300,6 +317,7 @@ const handleCustomizableToggle = async (e) => {
     const result = await showDeleteConfirmation(title, 'Product');
 
     if (result.isConfirmed) {
+      setDeleteLoading(id);
       try {
         const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
           method: 'DELETE',
@@ -307,21 +325,25 @@ const handleCustomizableToggle = async (e) => {
         });
         
         if (response.ok) {
-          setProducts(products.filter((p) => p.id !== id));
+          setProducts(products?.filter((p) => p.id !== id));
           showSuccess(`"${title}" has been deleted successfully!`, 'Deleted!');
         } else {
-          throw new Error('Failed to delete product');
+          showCompactError('Failed to delete product');
         }
       } catch (error) {
         console.error('Failed to delete product:', error);
         showError('Failed to delete the product. Please try again.');
+      } finally {
+        setDeleteLoading(null);
       }
     }
   };
 
-  const filteredProducts = products.filter((product) =>
-    product.title?.toLowerCase()?.includes(searchTerm?.toLowerCase())
-  );
+  const filteredProducts =Array.isArray(products) 
+  ? products.filter((product) => 
+      product.title?.toLowerCase()?.includes(searchTerm?.toLowerCase())
+    )
+  : [];
 
   return (
     <div className="app">
@@ -340,6 +362,7 @@ const handleCustomizableToggle = async (e) => {
               deleteWeight={deleteWeight}
               handleSubmit={handleSubmit}
               editingId={editingId}
+              submitLoading={submitLoading}
               onChangeImageUrls={(newImages) => {
                 setFormData({ ...formData, image_url: newImages });
               }}
@@ -352,6 +375,8 @@ const handleCustomizableToggle = async (e) => {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               setActiveSection={setActiveSection} 
+              productsLoading={productsLoading}
+              deleteLoading={deleteLoading}
             />
           )}
         </div>
@@ -417,6 +442,7 @@ function CreateForm({
   handleArrayChange,
   handleWeightChange,
   addWeight,
+  submitLoading,
   deleteWeight,
   handleSubmit,
   editingId,
@@ -704,8 +730,15 @@ function CreateForm({
         </div>
 
         <div className="form-actions">
-          <button type="submit" className="submit-btn">
-            {editingId ? '✏️ Update Product' : '➕ Create Product'}
+          <button type="submit" className="submit-btn"  disabled={submitLoading}>
+           {submitLoading ? (
+              <>
+                <span className="loading-spinner"></span>
+                {editingId ? 'Updating...' : 'Creating...'}
+              </>
+            ) : (
+              editingId ? '✏️ Update Product' : '➕ Create Product'
+            )}
           </button>
         </div>
       </form>
@@ -713,14 +746,22 @@ function CreateForm({
   );
 }
 
-// Enhanced View Section
-function ViewSection({ products, handleEdit, handleDelete, searchTerm, setSearchTerm, setActiveSection }) {
+  function ViewSection({ 
+  products, 
+  handleEdit, 
+  handleDelete, 
+  searchTerm, 
+  setSearchTerm,
+  setActiveSection,
+  productsLoading,
+  deleteLoading
+}) {
   return (
     <div className="view-section">
       <div className="view-header">
         <h2 className="section-title">📦 Product Inventory</h2>
       </div>
-       <div className="search-container">
+      <div className="search-container">
           <div className="search-box">
             <i className="search-icon">🔍</i>
             <input
@@ -732,7 +773,12 @@ function ViewSection({ products, handleEdit, handleDelete, searchTerm, setSearch
             />
           </div>
         </div>
-      {products.length === 0 ? (
+      {productsLoading ? (
+        <div className="loading-container">
+          <div className="loading-spinner large"></div>
+          <p>Loading products...</p>
+        </div>
+      ) : products.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📭</div>
           <h3>No Products Found</h3>
@@ -755,7 +801,7 @@ function ViewSection({ products, handleEdit, handleDelete, searchTerm, setSearch
         <div className="products-grid">
           {products.map((product) => (
             <div key={product.id} className="product-card">
-              <div className="product-image">
+               <div className="product-image">
                 {product.image_url && product.image_url.length > 0 ? (
                   <img src={product.image_url[0]} alt={product.title} />
                 ) : (
@@ -815,9 +861,17 @@ function ViewSection({ products, handleEdit, handleDelete, searchTerm, setSearch
                 <button 
                   className="delete-btn"
                   onClick={() => handleDelete(product.id, product.title)}
+                  disabled={deleteLoading === product.id}
                   title="Delete Product"
                 >
-                  🗑️ Delete
+                  {deleteLoading === product.id ? (
+                    <>
+                      <span className="loading-spinner small"></span>
+                      Deleting...
+                    </>
+                  ) : (
+                    '🗑️ Delete'
+                  )}
                 </button>
               </div>
             </div>
@@ -827,5 +881,7 @@ function ViewSection({ products, handleEdit, handleDelete, searchTerm, setSearch
     </div>
   );
 }
+
+
 
 export default Dashboard;
