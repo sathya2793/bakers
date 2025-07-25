@@ -3,8 +3,25 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import ImageUploader from "../components/ImageUploader";
-const API_BASE_URL = 'http://localhost:5005';
+import { 
+  showSuccess, 
+  showError, 
+  showWarning,
+  showConfirmation,
+  showDeleteConfirmation,
+  showCompactSuccess
+} from '../utils/notifications';
+const API_BASE_URL = 'https://bakers-backend.vercel.app';
 
+// Suggestions data
+const SUGGESTIONS = {
+  flavor: ['Chocolate', 'Vanilla', 'Strawberry', 'Red Velvet', 'Black Forest', 'Butterscotch', 'Pineapple', 'Mango', 'Coffee', 'Caramel', 'Fruit Mix' , 'Blueberry'],
+  event: ['Birthday', 'Wedding', 'Anniversary', 'Baby Shower', 'Graduation', 'Valentine\'s Day', 'Mother\'s Day', 'Father\'s Day', 'Christmas', 'New Year' , 'Retirement'],
+  theme: ['Tropical','Fruity','Floral','Romantic','Love','Valentine','Cartoon','Superhero','Princess','Photo Cake','Number Cake','Alphabet Cake','Rainbow','Galaxy','Unicorn','Mermaid','Jungle','Animal','Baby Shower','Newborn','Gender Reveal','Cricket','Football','IPL','Graduation','Back to School','Books','Makeup','Fashion','Luxury','Minimalist','Rustic','Vintage','Gold Foil','Ombre','3D Cake','Pinata','Pull Me Up','Black Forest Theme','Red Velvet Theme','Chocolate Overload','Fresh Fruit','Kids Birthday','Bride-to-Be','Anniversary Special','Heart Shape','Tier Cake','Single Layer','Classic Cream','Fondant Art','Emoji Cake','Festival Special','New Year','Christmas','Eid','Diwali','Raksha Bandhan','Mother\'s Day','Father\'s Day'],
+  ingredients: ['Flour', 'Sugar', 'Eggs', 'Butter', 'Milk', 'Cocoa', 'Vanilla Extract', 'Baking Powder', 'Salt', 'Cream Cheese'],
+  tag: ['Premium', 'Popular', 'New', 'Bestseller', 'Limited Edition', 'Seasonal', 'Classic', 'Gourmet', 'Homemade', 'Fresh'],
+  type: ['Fresh cream','Truffle','Cake', 'Cupcake', 'Pastry', 'Tart', 'Cheesecake', 'Mousse', 'Tiramisu', 'Eclair', 'Macaron', 'Cookie']
+};
 
 // Helper for auth headers
 const getAuthHeaders = () => {
@@ -39,8 +56,9 @@ const Dashboard = () => {
   });
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeSection, setActiveSection] = useState('create');
+  const [activeSection, setActiveSection] = useState('view');
   const navigate = useNavigate();
+
 
   // Google OAuth Token & User Info
   useEffect(() => {
@@ -63,7 +81,7 @@ const Dashboard = () => {
   // Simple logout (remove token and reload)
   const handleLogout = () => {
     localStorage.removeItem('googleToken');
-    window.location.href = '/'; // Full reload to clear state
+    window.location.href = '/';
   };
 
   const fetchProducts = async () => {
@@ -76,41 +94,102 @@ const Dashboard = () => {
       setProducts(data);
     } catch (error) {
       console.error("Error fetching products:", error);
-      // Handle error, e.g., redirect to login if unauthorized
+      showError('Failed to fetch products');
     }
   };
 
   // Fetch products on component mount
   useEffect(() => {
-    if (userInfo) { // Only fetch if user is authenticated
+    if (userInfo) {
       fetchProducts();
     }
   }, [userInfo]);
 
   // If loading, show loading state
   if (loading) {
-    return <div style={{ textAlign: 'center' }}>Loading user information...</div>;
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading user information...</p>
+      </div>
+    );
   }
 
   // If userInfo is null (fetch failed), show error
   if (!userInfo) {
     return (
-      <div style={{ color: 'red', textAlign: 'center' }}>
-        Error: Unable to load user information.
-        <br />
-        Please login again.
+      <div className="error-container">
+        <h2>Error: Unable to load user information.</h2>
+        <p>Please login again.</p>
+        <button onClick={() => navigate('/login')} className="retry-btn">
+          Go to Login
+        </button>
       </div>
     );
   }
 
-  // ---- [Rest of your CRUD logic remains unchanged] ----
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value,
-    });
-  };
+  // ---- CRUD logic ----
+
+// Keep the regular handleInputChange for other fields
+const handleInputChange = (e) => {
+  const { name, value, type, checked } = e.target;
+  setFormData({
+    ...formData,
+    [name]: type === 'checkbox' ? checked : value,
+  });
+};
+
+const handleCustomizableToggle = async (e) => {
+  const { checked } = e.target;
+  
+  // Check if there's existing data that would be lost
+  const hasWeightData = formData.availableWeights.some(w => w.weight || w.price) || formData.defaultWeight;
+  const hasRangeData = formData.price_range || formData.weights_range;
+  
+  let shouldProceed = true;
+  
+  if (checked && hasWeightData) {
+    // Switching to customizable but has weight data
+    const result = await showConfirmation(
+      'Switching to customizable mode will clear your weight and pricing data. Continue?',
+      'Clear Data?'
+    );
+    shouldProceed = result.isConfirmed;
+  } else if (!checked && hasRangeData) {
+    // Switching from customizable but has range data
+    const result = await showConfirmation(
+      'Switching to standard mode will clear your price and weight ranges. Continue?',
+      'Clear Data?'
+    );
+    shouldProceed = result.isConfirmed;
+  }
+  
+  if (shouldProceed) {
+    if (checked) {
+      // Switching TO customizable mode
+      setFormData({
+        ...formData,
+        customizable: true,
+        availableWeights: [{ weight: '', price: '' }],
+        defaultWeight: '',
+      });
+      showCompactSuccess('Switched to customizable product mode');
+    } else {
+      // Switching FROM customizable mode
+      setFormData({
+        ...formData,
+        customizable: false,
+        price_range: '',
+        weights_range: '',
+      });
+      showCompactSuccess('Switched to standard product mode');
+    }
+  } else {
+    // User cancelled, revert the toggle
+    e.target.checked = !checked;
+  }
+};
+
 
   const handleArrayChange = (name, value) => {
     setFormData({ ...formData, [name]: value.split(',').map((item) => item.trim()) });
@@ -135,41 +214,53 @@ const Dashboard = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    
+    const productData = { ...formData };
+    delete productData.id;
 
-  const productData = { ...formData }; // The data from the form
-  delete productData.id; // Remove any old ID, backend will generate it
+    try {
+      let response;
+      if (editingId) {
+        // UPDATE logic
+        response = await fetch(`${API_BASE_URL}/api/products/${editingId}`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(productData),
+        });
+        
+        if (response.ok) {
+          setProducts(products.map((p) => (p.id === editingId ? { ...productData, id: editingId } : p)));
+          showSuccess('Product updated successfully!');
+        } else {
+          throw new Error('Failed to update product');
+        }
+      } else {
+        // CREATE logic
+        response = await fetch(`${API_BASE_URL}/api/products`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(productData),
+        });
+        
+        if (response.ok) {
+          const newProduct = await response.json();
+          setProducts([...products, newProduct]);
+          showSuccess('Product created successfully!');
+        } else {
+          throw new Error('Failed to create product');
+        }
+      }
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      resetForm();
+      setEditingId(null);
 
-  try {
-    if (editingId) {
-      // UPDATE logic
-      await fetch(`${API_BASE_URL}/api/products/${editingId}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(productData),
-      });
-      // Refresh list after update
-      setProducts(products.map((p) => (p.id === editingId ? { ...productData, id: editingId } : p)));
-
-    } else {
-      // CREATE logic
-      const response = await fetch(`${API_BASE_URL}/api/products`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(productData),
-      });
-      const newProduct = await response.json(); // Get the new product with its ID
-      setProducts([...products, newProduct]); // Add to the local list
+    } catch (error) {
+      console.error('Failed to save product:', error);
+      showError(editingId ? 'Failed to update product' : 'Failed to create product');
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    resetForm();
-    setEditingId(null);
-
-  } catch (error) {
-    console.error('Failed to save product:', error);
-    // Optionally show an error message to the user
-  }
-};
+  };
 
   const resetForm = () => {
     setFormData({
@@ -205,17 +296,25 @@ const Dashboard = () => {
     setActiveSection('create');
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+  const handleDelete = async (id, title) => {
+    const result = await showDeleteConfirmation(title, 'Product');
+
+    if (result.isConfirmed) {
       try {
-        await fetch(`${API_BASE_URL}/api/products/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
           method: 'DELETE',
           headers: getAuthHeaders(),
         });
-        // Remove from local state on success
-        setProducts(products.filter((p) => p.id !== id));
+        
+        if (response.ok) {
+          setProducts(products.filter((p) => p.id !== id));
+          showSuccess(`"${title}" has been deleted successfully!`, 'Deleted!');
+        } else {
+          throw new Error('Failed to delete product');
+        }
       } catch (error) {
         console.error('Failed to delete product:', error);
+        showError('Failed to delete the product. Please try again.');
       }
     }
   };
@@ -228,12 +327,13 @@ const Dashboard = () => {
     <div className="app">
       <Navbar handleLogout={handleLogout} userEmail={userInfo.email} />
       <div className="main-container">
-        <Sidebar setActiveSection={setActiveSection} activeSection={activeSection} fetchProducts={fetchProducts} />
+        <Sidebar setActiveSection={setActiveSection} activeSection={activeSection} />
         <div className="content">
           {activeSection === 'create' ? (
             <CreateForm
               formData={formData}
               handleInputChange={handleInputChange}
+              handleCustomizableToggle={handleCustomizableToggle}
               handleArrayChange={handleArrayChange}
               handleWeightChange={handleWeightChange}
               addWeight={addWeight}
@@ -251,7 +351,7 @@ const Dashboard = () => {
               handleDelete={handleDelete}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
-              fetchProducts={fetchProducts}
+              setActiveSection={setActiveSection} 
             />
           )}
         </div>
@@ -260,47 +360,60 @@ const Dashboard = () => {
   );
 };
 
-// Navbar component (now shows user email)
+// Enhanced Navbar component
 function Navbar({ handleLogout, userEmail }) {
   return (
     <nav className="navbar">
-      <h1>Admin Dashboard</h1>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <span style={{ fontWeight: 'bold' }}>{userEmail}</span>
+      <div className="navbar-brand">
+        <h1>🧁 Baker's Dashboard</h1>
+      </div>
+      <div className="navbar-user">
+        <div className="user-info">
+          <div className="user-avatar">
+            {userEmail.charAt(0).toUpperCase()}
+          </div>
+          <span className="user-email">{userEmail}</span>
+        </div>
         <button onClick={handleLogout} className="logout-button">
-          Logout
+          <span>Logout</span>
         </button>
       </div>
     </nav>
   );
 }
 
-// Sidebar (unchanged)
+// Enhanced Sidebar
 function Sidebar({ setActiveSection, activeSection }) {
   return (
     <aside className="sidebar">
-      <ul>
+      {/* <div className="sidebar-header">
+        <h3>Navigation</h3>
+      </div> */}
+      <ul className="sidebar-menu">
         <li
-          className={activeSection === 'create' ? 'active' : ''}
-          onClick={() => setActiveSection('create')}
-        >
-          Create Product
-        </li>
-        <li
-          className={activeSection === 'view' ? 'active' : ''}
+          className={`sidebar-item ${activeSection === 'view' ? 'active' : ''}`}
           onClick={() => setActiveSection('view')}
         >
-          View Products
+          <i>👁️</i>
+          <span>View Products</span>
+        </li>
+        <li
+          className={`sidebar-item ${activeSection === 'create' ? 'active' : ''}`}
+          onClick={() => setActiveSection('create')}
+        >
+          <i>➕</i>
+          <span>Create Product</span>
         </li>
       </ul>
     </aside>
   );
 }
 
-// Create Form (unchanged, as per your code)
+// Enhanced Create Form with suggestions
 function CreateForm({
   formData,
   handleInputChange,
+  handleCustomizableToggle,
   handleArrayChange,
   handleWeightChange,
   addWeight,
@@ -309,150 +422,408 @@ function CreateForm({
   editingId,
   onChangeImageUrls,
 }) {
-  return (
-    <form className="create-form" onSubmit={handleSubmit}>
-      <h2>{editingId ? 'Update Product' : 'Create New Product'}</h2>
-      <label>Title:</label>
-      <input name="title" value={formData.title} onChange={handleInputChange} required />
-      <label>Customizable:</label>
-      <div className="toggle-switch">
-        <input
-          type="checkbox"
-          name="customizable"
-          checked={formData.customizable}
-          onChange={handleInputChange}
-          id="customizable-toggle"
-        />
-        <label htmlFor="customizable-toggle" className="toggle-label"></label>
-      </div>
-      {formData.customizable ? (
-        <>
-          <label>Price Range:</label>
-          <input name="price_range" value={formData.price_range} onChange={handleInputChange} />
-          <label>Weights Range:</label>
-          <input name="weights_range" value={formData.weights_range} onChange={handleInputChange} />
-        </>
-      ) : (
-        <>
-          <label>Available Weights:</label>
-          {formData.availableWeights.map((w, index) => (
-            <div key={index} className="weight-input">
-              <input
-                placeholder="Weight (e.g., 0.5kg)"
-                value={w.weight}
-                onChange={(e) => handleWeightChange(index, 'weight', e.target.value)}
-              />
-              <input
-                type="number"
-                placeholder="Price"
-                value={w.price}
-                onChange={(e) => handleWeightChange(index, 'price', e.target.value)}
-              />
-              <button type="button" className="delete-weight" onClick={() => deleteWeight(index)}>
-                ×
-              </button>
-            </div>
+  const [showSuggestions, setShowSuggestions] = useState({});
+
+ const addSuggestion = (field, suggestion, event) => {
+  const normalizeText = (text) => text.toLowerCase().trim();
+  
+  if (['event', 'theme', 'ingredients'].includes(field)) {
+    const currentArray = formData[field] || [];
+    const normalizedSuggestion = normalizeText(suggestion);
+    
+    const suggestionExists = currentArray.some(item => 
+      normalizeText(item) === normalizedSuggestion
+    );
+    
+    if (suggestionExists) {
+      // Highlight the duplicate suggestion temporarily
+      const suggestionElement = event.target;
+      suggestionElement.classList.add('duplicate-suggestion');
+      setTimeout(() => {
+        suggestionElement.classList.remove('duplicate-suggestion');
+      }, 1500);
+      showWarning(`"${suggestion}" already exists in ${field}!`, 'Already Added!');
+      return;
+    }
+    
+    const currentValue = formData[field].join(', ');
+    const newValue = currentValue ? `${currentValue}, ${suggestion}` : suggestion;
+    handleArrayChange(field, newValue);
+    
+  } else {
+    const currentValue = formData[field] || '';
+    
+    if (normalizeText(currentValue) === normalizeText(suggestion)) {
+      const suggestionElement = event.target;
+      suggestionElement.classList.add('duplicate-suggestion');
+      setTimeout(() => {
+        suggestionElement.classList.remove('duplicate-suggestion');
+      }, 1500);
+      
+      showWarning(`"${suggestion}" is already selected!`, 'Already Selected!');
+      return;
+    }
+    
+    handleInputChange({
+      target: {
+        name: field,
+        value: suggestion,
+        type: 'text'
+      }
+    });
+  }
+};
+
+
+  const SuggestionBox = ({ field, suggestions }) => (
+    <div className="suggestions-container">
+      <button 
+        type="button" 
+        className="suggestions-toggle"
+        onClick={() => setShowSuggestions({ 
+          ...showSuggestions, 
+          [field]: !showSuggestions[field] 
+        })}
+      >
+        {showSuggestions[field] ? '🙈 Hide Suggestions' : '💡 Show Suggestions'}
+      </button>
+      {showSuggestions[field] && (
+        <div className="suggestions-box">
+          {suggestions.map((suggestion, index) => (
+            <span
+              key={index}
+              className="suggestion-tag"
+              onClick={(e) => addSuggestion(field, suggestion, e)}
+            >
+              {suggestion}
+            </span>
           ))}
-          <button type="button" onClick={addWeight}>
-            Add Weight
-          </button>
-          <label>Default Weight:</label>
-          <input name="defaultWeight" value={formData.defaultWeight} onChange={handleInputChange} />
-        </>
+        </div>
       )}
-      <label>Flavor:</label>
-      <input name="flavor" value={formData.flavor} onChange={handleInputChange} />
-      <label>Events (comma-separated):</label>
-      <input
-        onChange={(e) => handleArrayChange('event', e.target.value)}
-        value={formData.event.join(', ')}
-      />
-      <label>Themes (comma-separated):</label>
-      <input
-        onChange={(e) => handleArrayChange('theme', e.target.value)}
-        value={formData.theme.join(', ')}
-      />
-      <label>Eggless:</label>
-      <div className="toggle-switch">
-        <input
-          type="checkbox"
-          name="isEggless"
-          checked={formData.isEggless}
-          onChange={handleInputChange}
-          id="eggless-toggle"
-        />
-        <label htmlFor="eggless-toggle" className="toggle-label"></label>
-      </div>
-      <label>Availability:</label>
-      <select name="availability" value={formData.availability} onChange={handleInputChange}>
-        <option>In Stock</option>
-        <option>Out of Stock</option>
-      </select>
-      <label>Upload Images (PNG, JPG):</label>
-      <ImageUploader
-        images={formData.image_url}
-        onChange={(newImages) => {
-          onChangeImageUrls(newImages);
-        }}
-      />
-      <label>Description:</label>
-      <textarea
-        name="description"
-        value={formData.description}
-        onChange={handleInputChange}
-      />
-      <label>Ingredients (comma-separated):</label>
-      <input
-        onChange={(e) => handleArrayChange('ingredients', e.target.value)}
-        value={formData.ingredients.join(', ')}
-      />
-      <label>Tag:</label>
-      <input name="tag" value={formData.tag} onChange={handleInputChange} />
-      <label>Type:</label>
-      <input name="type" value={formData.type} onChange={handleInputChange} />
-      <button type="submit">{editingId ? 'Update' : 'Submit'}</button>
-    </form>
+    </div>
+  );
+
+
+  return (
+    <div className="create-form-container">
+      <form className="create-form" onSubmit={handleSubmit}>
+        <div className="form-header">
+          <h2>{editingId ? '✏️ Update Product' : '➕ Create New Product'}</h2>
+        </div>
+
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Product Title *</label>
+            <input 
+              name="title" 
+              value={formData.title} 
+              onChange={handleInputChange} 
+              required 
+              placeholder="Enter product title"
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Customizable Product</label>
+            <div className="toggle-switch">
+              <input
+                type="checkbox"
+                name="customizable"
+                checked={formData.customizable}
+                onChange={handleCustomizableToggle}
+                id="customizable-toggle"
+              />
+              <label htmlFor="customizable-toggle" className="toggle-label"></label>
+            </div>
+          </div>
+
+          {formData.customizable ? (
+            <>
+              <div className="form-group">
+                <label>Price Range</label>
+                <input 
+                  name="price_range" 
+                  value={formData.price_range} 
+                  onChange={handleInputChange}
+                  placeholder="e.g., ₹500 - ₹2000"
+                />
+              </div>
+              <div className="form-group">
+                <label>Weights Range</label>
+                <input 
+                  name="weights_range" 
+                  value={formData.weights_range} 
+                  onChange={handleInputChange}
+                  placeholder="e.g., 0.5kg - 5kg"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="form-group full-width">
+                <label>Available Weights & Prices</label>
+                <div className="weights-container">
+                  {formData.availableWeights.map((w, index) => (
+                    <div key={index} className="weight-input-row">
+                      <input
+                        placeholder="Weight (e.g., 0.5kg)"
+                        value={w.weight}
+                        onChange={(e) => handleWeightChange(index, 'weight', e.target.value)}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Price (₹)"
+                        value={w.price}
+                        onChange={(e) => handleWeightChange(index, 'price', e.target.value)}
+                      />
+                      <button type="button" className="delete-weight-btn" onClick={() => deleteWeight(index)}>
+                        🗑️
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" className="add-weight-btn" onClick={addWeight}>
+                    Add Weight Option
+                  </button>
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Default Weight</label>
+                <input 
+                  name="defaultWeight" 
+                  value={formData.defaultWeight} 
+                  onChange={handleInputChange}
+                  placeholder="e.g., 1kg"
+                />
+              </div>
+            </>
+          )}
+
+          <div className="form-group">
+            <label>Flavor</label>
+            <input 
+              name="flavor" 
+              value={formData.flavor} 
+              onChange={handleInputChange}
+              placeholder="Enter flavor"
+            />
+            <SuggestionBox field="flavor" suggestions={SUGGESTIONS.flavor} />
+          </div>
+
+          <div className="form-group comma-separated">
+            <label>Events (comma-separated)</label>
+            <input
+              onChange={(e) => handleArrayChange('event', e.target.value)}
+              value={formData.event.join(', ')}
+              placeholder="Birthday, Wedding, Anniversary..."
+            />
+            <SuggestionBox field="event" suggestions={SUGGESTIONS.event} />
+          </div>
+
+          <div className="form-group comma-separated">
+            <label>Themes (comma-separated)</label>
+            <input
+              onChange={(e) => handleArrayChange('theme', e.target.value)}
+              value={formData.theme.join(', ')}
+              placeholder="Floral, Cartoon, Sports..."
+            />
+            <SuggestionBox field="theme" suggestions={SUGGESTIONS.theme} />
+          </div>
+
+          <div className="form-group comma-separated">
+            <label>Ingredients (comma-separated)</label>
+            <input
+              onChange={(e) => handleArrayChange('ingredients', e.target.value)}
+              value={formData.ingredients.join(', ')}
+              placeholder="Flour, Sugar, Eggs..."
+            />
+            <SuggestionBox field="ingredients" suggestions={SUGGESTIONS.ingredients} />
+          </div>
+
+          <div className="form-group">
+            <label>Tag</label>
+            <input 
+              name="tag" 
+              value={formData.tag} 
+              onChange={handleInputChange}
+              placeholder="Premium, Popular, New..."
+            />
+            <SuggestionBox field="tag" suggestions={SUGGESTIONS.tag} />
+          </div>
+
+          <div className="form-group">
+            <label>Type</label>
+            <input 
+              name="type" 
+              value={formData.type} 
+              onChange={handleInputChange}
+              placeholder="Cake, Cupcake, Pastry..."
+            />
+            <SuggestionBox field="type" suggestions={SUGGESTIONS.type} />
+          </div>
+
+          <div className="form-group">
+            <label>Eggless Product</label>
+            <div className="toggle-switch">
+              <input
+                type="checkbox"
+                name="isEggless"
+                checked={formData.isEggless}
+                onChange={handleInputChange}
+                id="eggless-toggle"
+              />
+              <label htmlFor="eggless-toggle" className="toggle-label"></label>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Availability Status</label>
+            <select name="availability" value={formData.availability} onChange={handleInputChange}>
+              <option>In Stock</option>
+              <option>Out of Stock</option>
+            </select>
+          </div>
+
+          <div className="form-group full-width">
+            <label>Product Images</label>
+            <ImageUploader
+              images={formData.image_url}
+              onChange={onChangeImageUrls}
+            />
+          </div>
+
+          <div className="form-group full-width">
+            <label>Product Description</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Describe your product..."
+              rows="4"
+            />
+          </div>
+        </div>
+
+        <div className="form-actions">
+          <button type="submit" className="submit-btn">
+            {editingId ? '✏️ Update Product' : '➕ Create Product'}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
-// View Section (unchanged, as per your code)
-function ViewSection({ products, handleEdit, handleDelete, searchTerm, setSearchTerm }) {
+// Enhanced View Section
+function ViewSection({ products, handleEdit, handleDelete, searchTerm, setSearchTerm, setActiveSection }) {
   return (
     <div className="view-section">
-      <h2>Product List</h2>
-      <label htmlFor="search-input">Search by Title:</label>
-      <input
-        id="search-input"
-        type="text"
-        placeholder="Enter the title"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="search-input"
-      />
-      <div className='product-container'>
-        {products.map((product) => (
-          <div key={product.id} className="product-card">
-            <h3>{product.title}</h3>
-            <p>
-              <strong>Flavor:</strong> {product.flavor}
-            </p>
-            <p>
-              <strong>Availability:</strong> {product.availability}
-            </p>
-            <p>
-              <strong>Description:</strong> {product.description}
-            </p>
-            <p>
-              <strong>Tag:</strong> {product.tag}
-            </p>
-            <p>
-              <strong>Customizable:</strong> {product.customizable ? 'Yes' : 'No'}
-            </p>
-            <button onClick={() => handleEdit(product)}>Update</button>
-            <button onClick={() => handleDelete(product.id)}>Delete</button>
-          </div>
-        ))}
+      <div className="view-header">
+        <h2 className="section-title">📦 Product Inventory</h2>
       </div>
+       <div className="search-container">
+          <div className="search-box">
+            <i className="search-icon">🔍</i>
+            <input
+              type="text"
+              placeholder="Search products by title..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+        </div>
+      {products.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon">📭</div>
+          <h3>No Products Found</h3>
+          <p>
+            {searchTerm 
+              ? `No products match your search "${searchTerm}"`
+              : "You haven't created any products yet"
+            }
+          </p>
+          {!searchTerm && (
+            <button 
+              className="create-first-btn"
+              onClick={() => setActiveSection('create')}
+            >
+              ➕ Create Your First Product
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="products-grid">
+          {products.map((product) => (
+            <div key={product.id} className="product-card">
+              <div className="product-image">
+                {product.image_url && product.image_url.length > 0 ? (
+                  <img src={product.image_url[0]} alt={product.title} />
+                ) : (
+                  <div className="placeholder-image">🧁</div>
+                )}
+              </div>
+              
+              <div className="product-content">
+                <h3 className="product-title">{product.title}</h3>
+                
+                <div className="product-details">
+                  <div className="detail-row">
+                    <span className="detail-label">Flavor:</span>
+                    <span className="detail-value">{product.flavor || 'N/A'}</span>
+                  </div>
+                  
+                  <div className="detail-row">
+                    <span className="detail-label">Status:</span>
+                    <span className={`status-badge ${product.availability === 'In Stock' ? 'in-stock' : 'out-stock'}`}>
+                      {product.availability}
+                    </span>
+                  </div>
+                  
+                  <div className="detail-row">
+                    <span className="detail-label">Customizable:</span>
+                    <span className={`customizable-badge ${product.customizable ? 'yes' : 'no'}`}>
+                      {product.customizable ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                  
+                  {product.tag && (
+                    <div className="detail-row">
+                      <span className="detail-label">Tag:</span>
+                      <span className="tag-badge">{product.tag}</span>
+                    </div>
+                  )}
+                </div>
+                
+                {product.description && (
+                  <p className="product-description">
+                    {product.description.length > 100 
+                      ? `${product.description.substring(0, 100)}...`
+                      : product.description
+                    }
+                  </p>
+                )}
+              </div>
+              
+              <div className="product-actions">
+                <button 
+                  className="edit-btn"
+                  onClick={() => handleEdit(product)}
+                  title="Edit Product"
+                >
+                  ✏️ Edit
+                </button>
+                <button 
+                  className="delete-btn"
+                  onClick={() => handleDelete(product.id, product.title)}
+                  title="Delete Product"
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

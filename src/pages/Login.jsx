@@ -3,6 +3,10 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import { jwtDecode } from 'jwt-decode';
+import { 
+  showSuccess, 
+  showError,
+} from '../utils/notifications';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -14,12 +18,14 @@ const Login = () => {
   return (
     <div className="login-wrapper">
       <div className="login-card">
+        <div class="navigation">
+            <a href="/" class="home-link">← Go to Home</a>
+        </div>
         <h2>Admin Login</h2>
         <p>Please login to access the dashboard</p>
         <GoogleLogin
           onSuccess={async (credentialResponse) => {
             const idToken = credentialResponse.credential;
-
             try {
               setLoading(true);
               const payload = jwtDecode(idToken);
@@ -27,24 +33,24 @@ const Login = () => {
 
               // Admin whitelist check
               if (!allowedEmails.includes(userEmail)) {
-                alert('Access denied: You are not an authorized admin');
+                showError('Access denied: You are not an authorized admin');
                 setLoading(false);
                 return;
               }
-
+              showSuccess('Login successful!');
               // Store the ID token for later use (for your backend)
               localStorage.setItem('googleToken', idToken);
               navigate('/dashboard');
             } catch (err) {
               console.error('Error during login:', err);
-              alert('Something went wrong while logging in.');
+              showError('Something went wrong while logging in.');
             } finally {
               setLoading(false);
             }
           }}
           onError={() => {
             console.log('Login Failed');
-            alert('Login failed, please try again.');
+            showError('Login failed, please try again.');
             setLoading(false);
           }}
           render={({ onClick, disabled }) => (

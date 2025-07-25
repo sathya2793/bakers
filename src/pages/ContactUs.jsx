@@ -69,7 +69,7 @@ const ContactUs = () => {
     });
 
     try {
-      const response = await fetch('http://localhost:5005/api/send-cake-request', {
+      const response = await fetch('https://bakers-backend.vercel.app/api/send-cake-request', {
         method: 'POST', 
         body: formPayload,
       });

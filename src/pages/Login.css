@@ -27,6 +27,9 @@ body {
   width: 380px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .login-card h2 {
@@ -59,4 +62,17 @@ body {
 .login-card button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.navigation {
+    margin-right: auto;
+}
+
+.home-link {
+    display: flex;
+    color: #007bff;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
 }

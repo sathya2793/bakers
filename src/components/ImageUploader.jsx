@@ -12,7 +12,7 @@ export default function ImageUploader({ images, onChange }) {
 
     try {
       // Use native Fetch API to POST the file
-      const response = await fetch('http://localhost:5005/api/upload', {
+      const response = await fetch('https://bakers-backend.vercel.app/api/upload', {
         method: 'POST',
         body: formData,
       });
