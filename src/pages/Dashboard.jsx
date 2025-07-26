@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import ImageUploader from "../components/ImageUploader";
+import { makeAPICall } from '../utils/apiWrapper';
 import { 
   showSuccess, 
   showError, 
@@ -12,7 +13,6 @@ import {
   showCompactSuccess,
   showCompactError
 } from '../utils/notifications';
-const API_BASE_URL = 'https://bakers-backend.vercel.app';
 
 // Suggestions data
 const SUGGESTIONS = {
@@ -22,15 +22,6 @@ const SUGGESTIONS = {
   ingredients: ['Flour', 'Sugar', 'Eggs', 'Butter', 'Milk', 'Cocoa', 'Vanilla Extract', 'Baking Powder', 'Salt', 'Cream Cheese'],
   tag: ['Premium', 'Popular', 'New', 'Bestseller', 'Limited Edition', 'Seasonal', 'Classic', 'Gourmet', 'Homemade', 'Fresh'],
   type: ['Fresh cream','Truffle','Cake', 'Cupcake', 'Pastry', 'Tart', 'Cheesecake', 'Mousse', 'Tiramisu', 'Eclair', 'Macaron', 'Cookie']
-};
-
-// Helper for auth headers
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('googleToken');
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
-  };
 };
 
 const Dashboard = () => {
@@ -88,25 +79,23 @@ const Dashboard = () => {
     }
   }, [activeSection, userInfo]);
   
+
   // Simple logout (remove token and reload)
   const handleLogout = () => {
     localStorage.removeItem('googleToken');
-    window.location.href = '/';
+    window.location.href = '/login';
   };
 
   const fetchProducts = async () => {
     setProductsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/products`, {
-        headers: getAuthHeaders(),
-      });
-      if (!response.ok) console.error('Failed to fetch');
-      const data = await response.json();
-      debugger;
-      setProducts(data);
+      const response = await makeAPICall('/api/products');
+      setProducts(response.data || []);
     } catch (error) {
-      console.error("Error fetching products:", error);
-      showError('Failed to fetch products');
+      if (error.message !== 'JWT_EXPIRED') {
+        console.error('Error fetching products:', error);
+        setProducts([]);
+      }
     } finally {
       setProductsLoading(false);
     }
@@ -232,39 +221,36 @@ const handleCustomizableToggle = async (e) => {
     setSubmitLoading(true);
     const productData = { ...formData };
     delete productData.id;
+    if (!productData.title.trim()) {
+      showCompactError('Please enter a product title');
+      setSubmitLoading(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const titleInput = document.querySelector('input[name="title"]');
+      if (titleInput) {
+        titleInput.focus();
+        titleInput.select();
+      }
+      return;
+    }
 
     try {
       let response;
       if (editingId) {
         // UPDATE logic
-        response = await fetch(`${API_BASE_URL}/api/products/${editingId}`, {
+        response = await makeAPICall(`/api/products/${editingId}`, {
           method: 'PUT',
-          headers: getAuthHeaders(),
           body: JSON.stringify(productData),
         });
-        
-        if (response.ok) {
-          const updatedProduct = await response.json();
-          setProducts(products.map((p) => (p.id === editingId ? updatedProduct : p)));
-          showSuccess('Product updated successfully!');
-        } else {
-          showCompactError('Failed to update product');
-        }
+        setProducts(products.map(p => p.id === editingId ? response.data : p));
+        showCompactSuccess('Product updated successfully!');
       } else {
         // CREATE logic
-        response = await fetch(`${API_BASE_URL}/api/products`, {
+        response = await makeAPICall('/api/products', {
           method: 'POST',
-          headers: getAuthHeaders(),
           body: JSON.stringify(productData),
         });
-        
-        if (response.ok) {
-          const newProduct = await response.json();
-          setProducts([...products, newProduct]);
-          showSuccess('Product created successfully!');
-        } else {
-          showCompactError('Failed to create product');
-        }
+        setProducts([response.data, ...products]);
+        showCompactSuccess('Product created successfully!');
       }
       
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -272,8 +258,10 @@ const handleCustomizableToggle = async (e) => {
       setEditingId(null);
 
     } catch (error) {
-      console.error('Failed to save product:', error);
-      showCompactError(editingId ? 'Failed to update product' : 'Failed to create product');
+      if (error.message !== 'JWT_EXPIRED' && error.message == 'API_ERROR') {
+        console.error(error);
+        showCompactError('Failed to save product. Please try again.');
+      }
     } finally {
       setSubmitLoading(false);
     }
@@ -319,20 +307,16 @@ const handleCustomizableToggle = async (e) => {
     if (result.isConfirmed) {
       setDeleteLoading(id);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+       await makeAPICall(`/api/products/${id}`, {
           method: 'DELETE',
-          headers: getAuthHeaders(),
         });
-        
-        if (response.ok) {
-          setProducts(products?.filter((p) => p.id !== id));
-          showSuccess(`"${title}" has been deleted successfully!`, 'Deleted!');
-        } else {
-          showCompactError('Failed to delete product');
-        }
+        setProducts(products?.filter(p => p.id !== id));
+        showCompactSuccess(`"${title}" deleted successfully!`);
       } catch (error) {
-        console.error('Failed to delete product:', error);
-        showError('Failed to delete the product. Please try again.');
+         if (error.message !== 'JWT_EXPIRED' && error.message !== 'API_ERROR') {
+          console.error(error);
+          showCompactError('Failed to delete product. Please try again.');
+        }
       } finally {
         setDeleteLoading(null);
       }
@@ -340,7 +324,8 @@ const handleCustomizableToggle = async (e) => {
   };
 
   const filteredProducts =Array.isArray(products) 
-  ? products.filter((product) => 
+  ? products?.filter((product) => 
+      product &&
       product.title?.toLowerCase()?.includes(searchTerm?.toLowerCase())
     )
   : [];
@@ -539,9 +524,9 @@ function CreateForm({
 
   return (
     <div className="create-form-container">
-      <form className="create-form" onSubmit={handleSubmit}>
+      <form className="create-form" onSubmit={handleSubmit} noValidate>
         <div className="form-header">
-          <h2>{editingId ? '✏️ Update Product' : '➕ Create New Product'}</h2>
+          <h2>{editingId ? 'Update Product' : 'Create New Product'}</h2>
         </div>
 
         <div className="form-grid">
@@ -550,8 +535,7 @@ function CreateForm({
             <input 
               name="title" 
               value={formData.title} 
-              onChange={handleInputChange} 
-              required 
+              onChange={handleInputChange}
               placeholder="Enter product title"
             />
           </div>
@@ -744,7 +728,7 @@ function CreateForm({
                 {editingId ? 'Updating...' : 'Creating...'}
               </>
             ) : (
-              editingId ? '✏️ Update Product' : '➕ Create Product'
+              editingId ? 'Update Product' : 'Create Product'
             )}
           </button>
         </div>
@@ -763,23 +747,38 @@ function CreateForm({
   productsLoading,
   deleteLoading
 }) {
+  const safeProducts = Array.isArray(products) ? products : [];
   return (
     <div className="view-section">
       <div className="view-header">
         <h2 className="section-title">📦 Product Inventory</h2>
       </div>
-      <div className="search-container">
-          <div className="search-box">
-            <i className="search-icon">🔍</i>
-            <input
-              type="text"
-              placeholder="Search products by title..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
+       {(safeProducts.length > 0 || searchTerm) && (
+        <div className="search-container">
+            <div className="search-box">
+              <i className="search-icon">🔍</i>
+              <input
+                type="text"
+                placeholder="Search products by title..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
           </div>
-        </div>
+      )}
+      {(safeProducts.length > 0 || searchTerm) && (
+          <div className="header-actions">
+            <button 
+              className="refresh-btn"
+              onClick={() => window.location.reload()}
+              disabled={productsLoading}
+              title="Refresh Products"
+            >
+              Refresh
+            </button>
+          </div>
+      )}
       {productsLoading ? (
         <div className="loading-container">
           <div className="loading-spinner large"></div>
@@ -839,32 +838,24 @@ function CreateForm({
                     </span>
                   </div>
                   
-                  {product.tag && (
-                    <div className="detail-row">
+                  <div className="detail-row">
                       <span className="detail-label">Tag:</span>
-                      <span className="tag-badge">{product.tag}</span>
-                    </div>
-                  )}
+                      <span className="tag-badge">{product.tag || 'N/A'}</span>
+                  </div>
+                
                 </div>
                 
-                {product.description && (
+                {/* {product.description && (
                   <p className="product-description">
                     {product.description.length > 100 
                       ? `${product.description.substring(0, 100)}...`
                       : product.description
                     }
                   </p>
-                )}
+                )} */}
               </div>
               
               <div className="product-actions">
-                <button 
-                  className="edit-btn"
-                  onClick={() => handleEdit(product)}
-                  title="Edit Product"
-                >
-                  ✏️ Edit
-                </button>
                 <button 
                   className="delete-btn"
                   onClick={() => handleDelete(product.id, product.title)}
@@ -879,6 +870,13 @@ function CreateForm({
                   ) : (
                     '🗑️ Delete'
                   )}
+                </button>
+                <button 
+                  className="edit-btn"
+                  onClick={() => handleEdit(product)}
+                  title="Edit Product"
+                >
+                  ✏️ Edit
                 </button>
               </div>
             </div>
