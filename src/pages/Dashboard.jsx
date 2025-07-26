@@ -448,7 +448,14 @@ function CreateForm({
   editingId,
   onChangeImageUrls,
 }) {
-  const [showSuggestions, setShowSuggestions] = useState({});
+  const [showSuggestions, setShowSuggestions] = useState({
+    flavor: true,
+    event: true,
+    theme: true,
+    ingredients: true,
+    tag: true,
+    type: true
+  });
 
  const addSuggestion = (field, suggestion, event) => {
   const normalizeText = (text) => text.toLowerCase().trim();
@@ -511,7 +518,7 @@ function CreateForm({
           [field]: !showSuggestions[field] 
         })}
       >
-        {showSuggestions[field] ? '🙈 Hide Suggestions' : '💡 Show Suggestions'}
+        {showSuggestions[field] ? 'Hide Suggestions' : '💡 Show Suggestions'}
       </button>
       {showSuggestions[field] && (
         <div className="suggestions-box">
@@ -688,7 +695,7 @@ function CreateForm({
           </div>
 
           <div className="form-group">
-            <label>Eggless Product</label>
+            <label>Eggless</label>
             <div className="toggle-switch">
               <input
                 type="checkbox"
