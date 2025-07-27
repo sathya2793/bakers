@@ -84,31 +84,31 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="top-cakes-section scroll-wrapper">
+      {/* <div className="top-cakes-section scroll-wrapper">
         <h3>Top 5 of the week</h3>
        <div class="card">
-    <div className="scroll-row card__container">
-        {topCakes.map((cake, index) => (
-        <article className="cake-card card__article" key={index}>
-            <div class="card__data">
-                <img src={cake.image} alt={cake.name} class="card__img"/>
-                <h4 class="card__title">{cake.name}</h4>
-            </div>
-            <div class="card__shapes">
-                <span class="card__shape"></span>
-                <span class="card__shape"></span>
-                <span class="card__shape"></span>
-                <span class="card__shape"></span>
-                <span class="card__shape"></span>
-                <span class="card__shape"></span>
-                <span class="card__shape"></span>
-                <span class="card__shape"></span>
-            </div>
-        </article>
-        ))}
-    </div>
-</div>
-      </div>
+          <div className="scroll-row card__container">
+              {topCakes.map((cake, index) => (
+              <article className="cake-card card__article" key={index}>
+                  <div class="card__data">
+                      <img src={cake.image} alt={cake.name} class="card__img"/>
+                      <h4 class="card__title">{cake.name}</h4>
+                  </div>
+                  <div class="card__shapes">
+                      <span class="card__shape"></span>
+                      <span class="card__shape"></span>
+                      <span class="card__shape"></span>
+                      <span class="card__shape"></span>
+                      <span class="card__shape"></span>
+                      <span class="card__shape"></span>
+                      <span class="card__shape"></span>
+                      <span class="card__shape"></span>
+                  </div>
+              </article>
+              ))}
+          </div>
+        </div>
+      </div> */}
     </div>
 
       <section className="section occasion-section" data-aos="fade-up">
