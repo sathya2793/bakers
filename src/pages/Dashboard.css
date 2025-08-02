@@ -546,6 +546,22 @@
   direction: ltr;
 }
 
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.range-inputs input {
+  flex: 1;
+  max-width: calc(30% - 10px);
+}
+
+.range-separator {
+  font-weight: bold;
+  color: #667eea;
+}
+
 .form-group.comma-separated input{
     max-width: none;
 }
@@ -664,6 +680,229 @@ input:checked + .toggle-label:before {
 .add-weight-btn:hover {
   background: #4caf50;
   color: white;
+}
+
+/* Quick Suggestions */
+.quick-suggestion-container {
+  margin-bottom: 1.5rem;
+  background: rgba(102, 126, 234, 0.05);
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+.add-suggestion-btn {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.add-suggestion-btn:hover {
+  background: #667eea;
+  color: white;
+}
+
+.add-suggestion-form {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.field-selector {
+  padding: 10px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 10px;
+  background: white;
+  min-width: 120px;
+}
+
+.suggestion-input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 10px;
+  min-width: 200px;
+}
+
+.save-suggestion-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.save-suggestion-btn:hover {
+  background: #4c5dc9;
+}
+
+/* Quick Suggestions Manager */
+.quick-suggestions-manager {
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.quick-suggestions-manager .form-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+}
+
+.quick-suggestions-manager .form-header h2 {
+  color: #667eea;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.quick-suggestions-manager .form-header p {
+  color: #666;
+  margin-top: 10px;
+  font-size: 1.1rem;
+}
+
+.add-suggestion-section {
+  background: rgba(102, 126, 234, 0.05);
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+}
+
+.add-suggestion-section h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.saved-suggestions-section h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.2rem;
+  color: #667eea;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+  font-weight: 600;
+}
+
+.field-suggestions {
+  margin-bottom: 1.5rem;
+}
+
+.field-suggestions h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.suggestions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 15px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  transition: all 0.3s ease;
+}
+
+.suggestion-value {
+  margin-right: 8px;
+  color: #667eea;
+}
+
+.delete-suggestion-btn {
+  background: none;
+  border: none;
+  color: #ff5252;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.delete-suggestion-btn:hover {
+  color: #ff0000;
+  transform: scale(1.1);
+}
+
+.delete-suggestion-btn:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 1rem;
+  color: #667eea;
+}
+
+.no-suggestions {
+  text-align: center;
+  padding: 1.5rem;
+  color: #666;
+  font-style: italic;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 10px;
+}
+
+/* Form actions for quick suggestions */
+.form-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 2px solid rgba(102, 126, 234, 0.1);
+}
+
+.form-actions .submit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.form-actions .submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.form-actions .submit-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Suggestions */
@@ -856,8 +1095,8 @@ input:checked + .toggle-label:before {
 /* Loading Spinners */
 .loading-spinner {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 10px;
+  height: 10px;
   border: 2px solid #ccc;
   border-radius: 50%;
   border-top: 2px solid white;
@@ -1003,4 +1242,20 @@ input:checked + .toggle-label:before {
 .main-container .remove-btn:hover {
   background: #f44336;
   transform: scale(1.1);
+}
+
+.duplicate-input {
+  border-color: #f44336 !important;
+  background-color: rgba(244, 67, 54, 0.1) !important;
+}
+
+.duplicate-input:focus {
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.2) !important;
+}
+
+.suggestion-count {
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: normal;
+  margin-left: 5px;
 }

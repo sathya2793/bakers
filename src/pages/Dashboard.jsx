@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import ImageUploader from "../components/ImageUploader";
-import { makeAPICall } from '../utils/apiWrapper';
+import { fetchQuickSuggestions as fetchQuickSuggestionsAPI, saveAllQuickSuggestions, makeAPICall } from '../utils/apiWrapper';
 import { 
   showSuccess, 
   showError, 
@@ -14,14 +14,156 @@ import {
   showCompactError
 } from '../utils/notifications';
 
+// ViewSection component for displaying products
+function ViewSection({ 
+  products, 
+  handleEdit, 
+  handleDelete, 
+  searchTerm, 
+  setSearchTerm,
+  setActiveSection,
+  productsLoading,
+  deleteLoading
+}) {
+  const safeProducts = Array.isArray(products) ? products : [];
+  return (
+    <div className="view-section">
+      <div className="view-header">
+        <h2 className="section-title">📦 Product Inventory</h2>
+      </div>
+       {(safeProducts.length > 0 || searchTerm) && (
+        <div className="search-container">
+            <div className="search-box">
+              <i className="search-icon">🔍</i>
+              <input
+                type="text"
+                placeholder="Search products by title..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+          </div>
+      )}
+      {(safeProducts.length > 0 || searchTerm) && (
+          <div className="header-actions">
+            <button 
+              className="refresh-btn"
+              onClick={() => window.location.reload()}
+              disabled={productsLoading}
+              title="Refresh Products"
+            >
+              Refresh
+            </button>
+          </div>
+      )}
+      {productsLoading ? (
+        <div className="loading-container">
+          <div className="loading-spinner large"></div>
+          <p>Loading products...</p>
+        </div>
+      ) : products.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon">📭</div>
+          <h3>No Products Found</h3>
+          <p>
+            {searchTerm 
+              ? `No products match your search "${searchTerm}"`
+              : "You haven't created any products yet"
+            }
+          </p>
+          {!searchTerm && (
+            <button 
+              className="create-first-btn"
+              onClick={() => setActiveSection('create')}
+            >
+              ➕ Create Your First Product
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="products-grid">
+          {products.map((product) => (
+            <div key={product.id} className="product-card">
+               <div className="product-image">
+                {product.image_url && product.image_url.length > 0 ? (
+                  <img src={product.image_url[0]} alt={product.title} />
+                ) : (
+                  <div className="placeholder-image">🧁</div>
+                )}
+              </div>
+              
+              <div className="product-content">
+                <h3 className="product-title">{product.title}</h3>
+                
+                <div className="product-details">
+                  <div className="detail-row">
+                    <span className="detail-label">Flavor:</span>
+                    <span className="detail-value">{product.flavor || 'N/A'}</span>
+                  </div>
+                  
+                  <div className="detail-row">
+                    <span className="detail-label">Status:</span>
+                    <span className={`status-badge ${product.availability === 'In Stock' ? 'in-stock' : 'out-stock'}`}>
+                      {product.availability}
+                    </span>
+                  </div>
+                  
+                  <div className="detail-row">
+                    <span className="detail-label">Customizable:</span>
+                    <span className={`customizable-badge ${product.customizable ? 'yes' : 'no'}`}>
+                      {product.customizable ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                  
+                  <div className="detail-row">
+                      <span className="detail-label">Tag:</span>
+                      <span className="tag-badge">{product.tag || 'N/A'}</span>
+                  </div>
+                
+                </div>
+              </div>
+              
+              <div className="product-actions">
+                <button 
+                  className="delete-btn"
+                  onClick={() => handleDelete(product.id, product.title)}
+                  disabled={deleteLoading === product.id}
+                  title="Delete Product"
+                >
+                  {deleteLoading === product.id ? (
+                    <>
+                      <span className="loading-spinner small"></span>
+                      Deleting...
+                    </>
+                  ) : (
+                    '🗑️ Delete'
+                  )}
+                </button>
+                <button 
+                  className="edit-btn"
+                  onClick={() => handleEdit(product)}
+                  title="Edit Product"
+                >
+                  ✏️ Edit
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Suggestions data
 const SUGGESTIONS = {
-  flavor: ['Chocolate', 'Vanilla', 'Strawberry', 'Red Velvet', 'Black Forest', 'Butterscotch', 'Pineapple', 'Mango', 'Coffee', 'Caramel', 'Fruit Mix' , 'Blueberry'],
-  event: ['Birthday', 'Wedding', 'Anniversary', 'Baby Shower', 'Graduation', 'Valentine\'s Day', 'Mother\'s Day', 'Father\'s Day', 'Christmas', 'New Year' , 'Retirement'],
-  theme: ['Tropical','Fruity','Floral','Romantic','Love','Valentine','Cartoon','Superhero','Princess','Photo Cake','Number Cake','Alphabet Cake','Rainbow','Galaxy','Unicorn','Mermaid','Jungle','Animal','Baby Shower','Newborn','Gender Reveal','Cricket','Football','IPL','Graduation','Back to School','Books','Makeup','Fashion','Luxury','Minimalist','Rustic','Vintage','Gold Foil','Ombre','3D Cake','Pinata','Pull Me Up','Black Forest Theme','Red Velvet Theme','Chocolate Overload','Fresh Fruit','Kids Birthday','Bride-to-Be','Anniversary Special','Heart Shape','Tier Cake','Single Layer','Classic Cream','Fondant Art','Emoji Cake','Festival Special','New Year','Christmas','Eid','Diwali','Raksha Bandhan','Mother\'s Day','Father\'s Day'],
-  ingredients: ['Flour', 'Sugar', 'Eggs', 'Butter', 'Milk', 'Cocoa', 'Vanilla Extract', 'Baking Powder', 'Salt', 'Cream Cheese'],
-  tag: ['Premium', 'Popular', 'New', 'Bestseller', 'Limited Edition', 'Seasonal', 'Classic', 'Gourmet', 'Homemade', 'Fresh'],
-  type: ['Fresh cream','Truffle','Cake', 'Cupcake', 'Pastry', 'Tart', 'Cheesecake', 'Mousse', 'Tiramisu', 'Eclair', 'Macaron', 'Cookie']
+  flavor: [],
+  event: [],
+  theme: [],
+  ingredients: [],
+  tag: [],
+  type: []
 };
 
 const Dashboard = () => {
@@ -48,6 +190,14 @@ const Dashboard = () => {
     price_range: '',
     weights_range: '',
     type: ''
+  });
+  const [customSuggestions, setCustomSuggestions] = useState({
+    flavor: [],
+    event: [],
+    theme: [],
+    ingredients: [],
+    tag: [],
+    type: []
   });
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -79,6 +229,25 @@ const Dashboard = () => {
     }
   }, [activeSection, userInfo]);
   
+  // Fetch quick suggestions on component mount
+  useEffect(() => {
+    if (userInfo) {
+      fetchQuickSuggestions();
+    }
+  }, [userInfo]);
+  
+  // Fetch quick suggestions from the API
+// Fix in Dashboard component - prevent API duplication
+const fetchQuickSuggestions = async () => {
+  try {
+    const suggestions = await fetchQuickSuggestionsAPI() || {};
+    setCustomSuggestions(suggestions);
+  } catch (error) {
+    console.error('Error fetching quick suggestions:', error);
+  }
+};
+
+  
 
   // Simple logout (remove token and reload)
   const handleLogout = () => {
@@ -101,10 +270,11 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch products on component mount
+  // Fetch products and quick suggestions on component mount
   useEffect(() => {
     if (userInfo) {
       fetchProducts();
+      fetchQuickSuggestions();
     }
   }, [userInfo]);
 
@@ -300,6 +470,13 @@ const handleCustomizableToggle = async (e) => {
     setEditingId(product.id);
     setActiveSection('create');
   };
+  
+  // Handle sidebar navigation to create product
+  const handleCreateProduct = () => {
+    resetForm();
+    setEditingId(null);
+    setActiveSection('create');
+  };
 
   const handleDelete = async (id, title) => {
     const result = await showDeleteConfirmation(title, 'Product');
@@ -330,15 +507,271 @@ const handleCustomizableToggle = async (e) => {
     )
   : [];
 
+  // Quick Suggestions Management Component
+const QuickSuggestionsManager = () => {
+  const [loading, setLoading] = useState(false);
+  const [editingSuggestions, setEditingSuggestions] = useState({
+    flavor: [],
+    event: [],
+    theme: [],
+    ingredients: [],
+    tag: [],
+    type: []
+  });
+  const [saveLoading, setSaveLoading] = useState(false);
+  
+  useEffect(() => {
+    fetchSavedSuggestions();
+  }, []);
+  
+  const fetchSavedSuggestions = async () => {
+    setLoading(true);
+    try {
+      const suggestions = await fetchQuickSuggestionsAPI() || {};
+      
+      // Initialize editing state with fetched data
+      const initialEditingState = {
+        flavor: [],
+        event: [],
+        theme: [],
+        ingredients: [],
+        tag: [],
+        type: []
+      };
+      
+      // Populate with existing data
+      Object.entries(suggestions || {}).forEach(([field, values]) => {
+        if (initialEditingState.hasOwnProperty(field) && Array.isArray(values)) {
+          initialEditingState[field] = values.map(value => ({ 
+            value, 
+            id: Math.random().toString(36).substr(2, 9) 
+          }));
+        }
+      });
+      
+      setEditingSuggestions(initialEditingState);
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleSaveAllSuggestions = async () => {
+    // Validate and check for duplicates
+    let hasErrors = false;
+    const duplicateErrors = [];
+    
+    Object.entries(editingSuggestions).forEach(([field, suggestions]) => {
+      suggestions.forEach((suggestion, index) => {
+        const trimmedValue = suggestion.value.trim();
+        if (trimmedValue && checkForDuplicates(field, trimmedValue, index)) {
+          duplicateErrors.push(`"${trimmedValue}" in ${field}`);
+          hasErrors = true;
+        }
+      });
+    });
+    
+    if (hasErrors) {
+      showError(`Duplicate suggestions found: ${duplicateErrors.join(', ')}`, 'Duplicates Not Allowed!');
+      return;
+    }
+    
+    setSaveLoading(true);
+    try {
+      // Convert editing state to API format
+      const suggestionsToSave = {};
+      Object.entries(editingSuggestions).forEach(([field, suggestions]) => {
+        const cleanValues = suggestions
+          .map(s => s.value.trim())
+          .filter(value => value.length > 0);
+          
+        if (cleanValues.length > 0) {
+          suggestionsToSave[field] = cleanValues;
+        }
+      });
+      
+      // Save all suggestions in one API call
+      await saveAllQuickSuggestions(suggestionsToSave);
+      
+      // Update parent component's custom suggestions
+      setCustomSuggestions(suggestionsToSave);
+      
+      // Refresh data
+      await fetchSavedSuggestions();
+      
+      const totalSuggestions = Object.values(suggestionsToSave).reduce((sum, values) => sum + values.length, 0);
+      const fieldsCount = Object.keys(suggestionsToSave).length;
+      showCompactSuccess(`Successfully saved`);
+    } catch (error) {
+      console.error('Error saving suggestions:', error);
+      showError('Failed to save suggestions. Please try again.');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+  
+  const handleAddNewField = (field) => {
+    setEditingSuggestions(prev => ({
+      ...prev,
+      [field]: [...prev[field], { value: '', id: Math.random() }]
+    }));
+  };
+  
+  const handleSuggestionChange = (field, index, value) => {
+    setEditingSuggestions(prev => {
+      const updated = [...prev[field]];
+      updated[index] = { ...updated[index], value };
+      return {
+        ...prev,
+        [field]: updated
+      };
+    });
+  };
+  
+  const handleRemoveField = (field, index) => {
+    setEditingSuggestions(prev => {
+      const updated = [...prev[field]];
+      updated.splice(index, 1);
+      return {
+        ...prev,
+        [field]: updated
+      };
+    });
+  };
+  
+  const checkForDuplicates = (field, currentValue, currentIndex) => {
+    const trimmedValue = currentValue.trim().toLowerCase();
+    if (!trimmedValue) return false;
+    
+    // Check against other suggestions in the same field
+    const hasDuplicateInCurrentField = editingSuggestions[field].some((suggestion, index) => 
+      index !== currentIndex && 
+      suggestion.value.trim().toLowerCase() === trimmedValue
+    );
+    
+    // Check against hardcoded suggestions
+    const hasDuplicateInHardcoded = (SUGGESTIONS[field] || []).some(suggestion =>
+      suggestion.toLowerCase() === trimmedValue
+    );
+    
+    return hasDuplicateInCurrentField || hasDuplicateInHardcoded;
+  };
+  
+  const handleDeleteSuggestion = async (field, value, index) => {
+    if (value.trim()) {
+      const result = await showDeleteConfirmation(value, 'Suggestion');
+      if (result.isConfirmed) {
+        handleRemoveField(field, index);
+        showCompactSuccess(`Removed "${value}" from ${field} suggestions!`);
+      }
+    } else {
+      handleRemoveField(field, index);
+    }
+  };
+  
+  // Fields configuration
+  const fields = [
+    { id: 'flavor', label: 'Flavor' },
+    { id: 'event', label: 'Event' },
+    { id: 'theme', label: 'Theme' },
+    { id: 'ingredients', label: 'Ingredients' },
+    { id: 'tag', label: 'Tag' },
+    { id: 'type', label: 'Type' }
+  ];
+  
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner large"></div>
+        <p>Loading suggestions...</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="quick-suggestions-manager create-form-container">
+      <div className="form-header">
+        <h2>Manage Quick Suggestions</h2>
+      </div>
+      
+      <div className="form-grid">
+        {fields.map(field => (
+          <div key={field.id} className="form-group full-width">
+            <label>
+              {field.label} Suggestions 
+              <span className="suggestion-count">({editingSuggestions[field.id].filter(s => s.value.trim()).length})</span>
+            </label>
+            
+            <div className="weights-container">
+              {editingSuggestions[field.id].map((suggestion, index) => (
+                <div key={suggestion.id} className="weight-input-row">
+                  <input
+                    placeholder={`${field.label} suggestion...`}
+                    value={suggestion.value}
+                    onChange={(e) => handleSuggestionChange(field.id, index, e.target.value)}
+                    className={checkForDuplicates(field.id, suggestion.value, index) ? 'duplicate-input' : ''}
+                  />
+                  <button 
+                    type="button" 
+                    className="delete-weight-btn"
+                    onClick={() => handleDeleteSuggestion(field.id, suggestion.value, index)}
+                    title="Remove suggestion"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <button 
+                type="button" 
+                className="add-weight-btn"
+                onClick={() => handleAddNewField(field.id)}
+              >
+                Add {field.label} Suggestion
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="form-actions">
+        <button 
+          type="button"
+          className="submit-btn"
+          onClick={handleSaveAllSuggestions}
+          disabled={saveLoading}
+        >
+          {saveLoading ? (
+            <>
+              <span className="loading-spinner"></span>
+              Saving All Changes...
+            </>
+          ) : (
+            'Save All Changes'
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
   return (
     <div className="app">
       <Navbar handleLogout={handleLogout} userEmail={userInfo.email} />
       <div className="main-container">
-        <Sidebar setActiveSection={setActiveSection} activeSection={activeSection} />
+        <Sidebar 
+          setActiveSection={setActiveSection} 
+          activeSection={activeSection} 
+          resetForm={resetForm} 
+          setEditingId={setEditingId} 
+          customSuggestions={customSuggestions}
+          setCustomSuggestions={setCustomSuggestions}
+        />
         <div className="content">
           {activeSection === 'create' ? (
             <CreateForm
               formData={formData}
+              setFormData={setFormData}
               handleInputChange={handleInputChange}
               handleCustomizableToggle={handleCustomizableToggle}
               handleArrayChange={handleArrayChange}
@@ -348,10 +781,14 @@ const handleCustomizableToggle = async (e) => {
               handleSubmit={handleSubmit}
               editingId={editingId}
               submitLoading={submitLoading}
+              customSuggestions={customSuggestions}
+              setCustomSuggestions={setCustomSuggestions}
               onChangeImageUrls={(newImages) => {
                 setFormData({ ...formData, image_url: newImages });
               }}
             />
+          ) : activeSection === 'suggestions' ? (
+            <QuickSuggestionsManager />
           ) : (
             <ViewSection
               products={filteredProducts}
@@ -393,7 +830,8 @@ function Navbar({ handleLogout, userEmail }) {
 }
 
 // Enhanced Sidebar
-function Sidebar({ setActiveSection, activeSection }) {
+// Enhanced Sidebar - Move Manage Quick Suggestions to last
+function Sidebar({ setActiveSection, activeSection, resetForm, setEditingId}) {
   return (
     <aside className="sidebar">
       {/* <div className="sidebar-header">
@@ -409,19 +847,32 @@ function Sidebar({ setActiveSection, activeSection }) {
         </li>
         <li
           className={`sidebar-item ${activeSection === 'create' ? 'active' : ''}`}
-          onClick={() => setActiveSection('create')}
+          onClick={() => {
+            resetForm();
+            setEditingId(null);
+            setActiveSection('create');
+          }}
         >
           <i>➕</i>
           <span>Create Product</span>
+        </li>
+        <li
+          className={`sidebar-item ${activeSection === 'suggestions' ? 'active' : ''}`}
+          onClick={() => setActiveSection('suggestions')}
+        >
+          <i>✨</i>
+          <span>Manage Quick Suggestions</span>
         </li>
       </ul>
     </aside>
   );
 }
 
+
 // Enhanced Create Form with suggestions
 function CreateForm({
   formData,
+  setFormData,
   handleInputChange,
   handleCustomizableToggle,
   handleArrayChange,
@@ -432,15 +883,10 @@ function CreateForm({
   handleSubmit,
   editingId,
   onChangeImageUrls,
+  customSuggestions,
+  setCustomSuggestions,
 }) {
-  const [showSuggestions, setShowSuggestions] = useState({
-    flavor: true,
-    event: true,
-    theme: true,
-    ingredients: true,
-    tag: true,
-    type: true
-  });
+  // No need for showSuggestions state as it's now handled in the SuggestionBox component
 
  const addSuggestion = (field, suggestion, event) => {
   const normalizeText = (text) => text.toLowerCase().trim();
@@ -493,23 +939,46 @@ function CreateForm({
 };
 
 
-  const SuggestionBox = ({ field, suggestions }) => (
+  // This component is intentionally left empty as it's replaced by the new SuggestionBox component above
+  
+  // SuggestionBox component to display suggestions below fields
+  // Updated SuggestionBox component in CreateForm
+const SuggestionBox = ({ field, suggestions }) => {
+  const [showSuggestions, setShowSuggestions] = useState(true);
+  
+  // Get API suggestions and remove duplicates
+  const apiSuggestions = customSuggestions && customSuggestions[field] || [];
+  const hardcodedSuggestions = SUGGESTIONS && SUGGESTIONS[field] || [];
+  
+  // Combine and deduplicate suggestions (case-insensitive)
+  const allSuggestions = [...hardcodedSuggestions];
+  
+  apiSuggestions.forEach(apiSuggestion => {
+    const exists = allSuggestions.some(existing => 
+      existing.toLowerCase() === apiSuggestion.toLowerCase()
+    );
+    if (!exists) {
+      allSuggestions.push(apiSuggestion);
+    }
+  });
+  
+  // Don't render if no suggestions
+  if (allSuggestions.length === 0) return null;
+  
+  return (
     <div className="suggestions-container">
       <button 
         type="button" 
         className="suggestions-toggle"
-        onClick={() => setShowSuggestions({ 
-          ...showSuggestions, 
-          [field]: !showSuggestions[field] 
-        })}
+        onClick={() => setShowSuggestions(!showSuggestions)}
       >
-        {showSuggestions[field] ? 'Hide Suggestions' : '💡 Show Suggestions'}
+        {showSuggestions ? 'Hide Suggestions' : '💡 Show Suggestions'}
       </button>
-      {showSuggestions[field] && (
+      {showSuggestions && (
         <div className="suggestions-box">
-          {suggestions.map((suggestion, index) => (
+          {allSuggestions.map((suggestion, index) => (
             <span
-              key={index}
+              key={`${suggestion}-${index}`} // Unique key to prevent React warnings
               className="suggestion-tag"
               onClick={(e) => addSuggestion(field, suggestion, e)}
             >
@@ -520,11 +989,17 @@ function CreateForm({
       )}
     </div>
   );
+};
+
 
 
   return (
     <div className="create-form-container">
-      <form className="create-form" onSubmit={handleSubmit} noValidate>
+      <form className="create-form" onSubmit={handleSubmit} onKeyDown={(e) => {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+        }
+      }} noValidate>
         <div className="form-header">
           <h2>{editingId ? 'Update Product' : 'Create New Product'}</h2>
         </div>
@@ -558,21 +1033,95 @@ function CreateForm({
             <>
               <div className="form-group">
                 <label>Price Range</label>
-                <input 
-                  name="price_range" 
-                  value={formData.price_range} 
-                  onChange={handleInputChange}
-                  placeholder="e.g., ₹500 - ₹2000"
-                />
+                <div className="range-inputs">
+                  <input 
+                    type="number"
+                    name="price_min" 
+                    value={formData.price_range ? formData.price_range.split('-')[0] : ''} 
+                    onChange={(e) => {
+                      const min = e.target.value;
+                      const max = formData.price_range ? formData.price_range.split('-')[1] || '' : '';
+                      setFormData({
+                        ...formData,
+                        price_range: `${min}-${max}`
+                      });
+                    }}
+                    placeholder="Min Price"
+                    min="0"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                      }
+                    }}
+                  />
+                  <span className="range-separator">-</span>
+                  <input 
+                    type="number"
+                    name="price_max"
+                    min="0"
+                    value={formData.price_range ? formData.price_range.split('-')[1] || '' : ''} 
+                    onChange={(e) => {
+                      const max = e.target.value;
+                      const min = formData.price_range ? formData.price_range.split('-')[0] || '' : '';
+                      setFormData({
+                        ...formData,
+                        price_range: `${min}-${max}`
+                      });
+                    }}
+                    placeholder="Max Price"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                      }
+                    }}
+                  />
+                </div>
               </div>
               <div className="form-group">
                 <label>Weights Range</label>
-                <input 
-                  name="weights_range" 
-                  value={formData.weights_range} 
-                  onChange={handleInputChange}
-                  placeholder="e.g., 0.5kg - 5kg"
-                />
+                <div className="range-inputs">
+                  <input 
+                    type="number"
+                    name="weights_min"
+                    min="0" 
+                    value={formData.weights_range ? formData.weights_range.split('-')[0] : ''} 
+                    onChange={(e) => {
+                      const min = e.target.value;
+                      const max = formData.weights_range ? formData.weights_range.split('-')[1] || '' : '';
+                      setFormData({
+                        ...formData,
+                        weights_range: `${min}-${max}`
+                      });
+                    }}
+                    placeholder="Min Weight"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                      }
+                    }}
+                  />
+                  <span className="range-separator">-</span>
+                  <input 
+                    type="number"
+                    name="weights_max"
+                    min="0" 
+                    value={formData.weights_range ? formData.weights_range.split('-')[1] || '' : ''} 
+                    onChange={(e) => {
+                      const max = e.target.value;
+                      const min = formData.weights_range ? formData.weights_range.split('-')[0] || '' : '';
+                      setFormData({
+                        ...formData,
+                        weights_range: `${min}-${max}`
+                      });
+                    }}
+                    placeholder="Max Weight"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </>
           ) : (
@@ -735,158 +1284,9 @@ function CreateForm({
       </form>
     </div>
   );
-}
 
-  function ViewSection({ 
-  products, 
-  handleEdit, 
-  handleDelete, 
-  searchTerm, 
-  setSearchTerm,
-  setActiveSection,
-  productsLoading,
-  deleteLoading
-}) {
-  const safeProducts = Array.isArray(products) ? products : [];
-  return (
-    <div className="view-section">
-      <div className="view-header">
-        <h2 className="section-title">📦 Product Inventory</h2>
-      </div>
-       {(safeProducts.length > 0 || searchTerm) && (
-        <div className="search-container">
-            <div className="search-box">
-              <i className="search-icon">🔍</i>
-              <input
-                type="text"
-                placeholder="Search products by title..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-            </div>
-          </div>
-      )}
-      {(safeProducts.length > 0 || searchTerm) && (
-          <div className="header-actions">
-            <button 
-              className="refresh-btn"
-              onClick={() => window.location.reload()}
-              disabled={productsLoading}
-              title="Refresh Products"
-            >
-              Refresh
-            </button>
-          </div>
-      )}
-      {productsLoading ? (
-        <div className="loading-container">
-          <div className="loading-spinner large"></div>
-          <p>Loading products...</p>
-        </div>
-      ) : products.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">📭</div>
-          <h3>No Products Found</h3>
-          <p>
-            {searchTerm 
-              ? `No products match your search "${searchTerm}"`
-              : "You haven't created any products yet"
-            }
-          </p>
-          {!searchTerm && (
-            <button 
-              className="create-first-btn"
-              onClick={() => setActiveSection('create')}
-            >
-              ➕ Create Your First Product
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="products-grid">
-          {products.map((product) => (
-            <div key={product.id} className="product-card">
-               <div className="product-image">
-                {product.image_url && product.image_url.length > 0 ? (
-                  <img src={product.image_url[0]} alt={product.title} />
-                ) : (
-                  <div className="placeholder-image">🧁</div>
-                )}
-              </div>
-              
-              <div className="product-content">
-                <h3 className="product-title">{product.title}</h3>
-                
-                <div className="product-details">
-                  <div className="detail-row">
-                    <span className="detail-label">Flavor:</span>
-                    <span className="detail-value">{product.flavor || 'N/A'}</span>
-                  </div>
-                  
-                  <div className="detail-row">
-                    <span className="detail-label">Status:</span>
-                    <span className={`status-badge ${product.availability === 'In Stock' ? 'in-stock' : 'out-stock'}`}>
-                      {product.availability}
-                    </span>
-                  </div>
-                  
-                  <div className="detail-row">
-                    <span className="detail-label">Customizable:</span>
-                    <span className={`customizable-badge ${product.customizable ? 'yes' : 'no'}`}>
-                      {product.customizable ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-                  
-                  <div className="detail-row">
-                      <span className="detail-label">Tag:</span>
-                      <span className="tag-badge">{product.tag || 'N/A'}</span>
-                  </div>
-                
-                </div>
-                
-                {/* {product.description && (
-                  <p className="product-description">
-                    {product.description.length > 100 
-                      ? `${product.description.substring(0, 100)}...`
-                      : product.description
-                    }
-                  </p>
-                )} */}
-              </div>
-              
-              <div className="product-actions">
-                <button 
-                  className="delete-btn"
-                  onClick={() => handleDelete(product.id, product.title)}
-                  disabled={deleteLoading === product.id}
-                  title="Delete Product"
-                >
-                  {deleteLoading === product.id ? (
-                    <>
-                      <span className="loading-spinner small"></span>
-                      Deleting...
-                    </>
-                  ) : (
-                    '🗑️ Delete'
-                  )}
-                </button>
-                <button 
-                  className="edit-btn"
-                  onClick={() => handleEdit(product)}
-                  title="Edit Product"
-                >
-                  ✏️ Edit
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
+}
 
 
 export default Dashboard;

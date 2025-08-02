@@ -230,7 +230,11 @@ const ContactUs = () => {
         <p>Share your dream cake ideas with us! Upload inspiration images and describe your vision.</p>
       </div>
       
-      <form onSubmit={handleSubmit} className="contact-form">
+      <form onSubmit={handleSubmit} className="contact-form" onKeyDown={(e) => {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+        }
+      }}>
         {/* Personal Information */}
         <div className="form-section">
           <h3 className="section-title">
@@ -248,6 +252,11 @@ const ContactUs = () => {
                 onChange={handleChange} 
                 value={formData.name}
                 placeholder="Enter your full name"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
               />
             </div>
 
@@ -256,14 +265,19 @@ const ContactUs = () => {
               <div className="mobile-input">
                 <span className="country-code">+91</span>
                 <input 
-                  type="tel" 
-                  name="mobile" 
+                  type="number" 
+                  name="mobile"
                   required 
                   pattern="[6-9][0-9]{9}"
                   onChange={handleChange} 
                   value={formData.mobile}
                   placeholder="9876543210"
                   maxLength="10"
+                  onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
                 />
               </div>
             </div>
@@ -279,6 +293,11 @@ const ContactUs = () => {
                 onChange={handleChange} 
                 value={formData.email}
                 placeholder="your.email@example.com"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
               />
             </div>
 
@@ -291,18 +310,28 @@ const ContactUs = () => {
                 onChange={handleChange} 
                 value={formData.location}
                 placeholder="Your city or area"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
               />
             </div>
 
             <div className="form-group">
               <label>Pincode *</label>
               <input 
-                type="text" 
+                type="number" 
                 name="pincode" 
                 required 
                 onChange={handleChange} 
                 value={formData.pincode}
                 placeholder="Your pincode"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
               />
             </div>
           </div>
@@ -353,6 +382,11 @@ const ContactUs = () => {
                 value={formData.customEvent}
                 onChange={handleChange}
                 required
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
               />
             </div>
           )}
@@ -366,6 +400,11 @@ const ContactUs = () => {
                 value={formData.theme} 
                 placeholder="e.g., Floral, Cartoon, Elegant, Rustic"
                 onChange={handleChange} 
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                  }
+                }}
               />
             </div>
 
@@ -447,6 +486,11 @@ const ContactUs = () => {
                         value={imageDescriptions[index] || ''}
                         onChange={(e) => handleImageDescriptionChange(index, e.target.value)}
                         rows="3"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                          }
+                        }}
                       />
                     </div>
                   </div>
@@ -470,6 +514,11 @@ const ContactUs = () => {
               rows="5"
               value={formData.finalDescription}
               onChange={handleChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                }
+              }}
             />
           </div>
         </div>

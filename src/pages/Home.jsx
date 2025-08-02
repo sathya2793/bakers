@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './Home.css';
 import Carousels from '../components/Carousels';
 import Testimonials from '../components/Testimonials';
@@ -13,7 +13,9 @@ import WhyChooseUs from '../components/WhyChooseUs';
 import OurServices from '../components/OurServices';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
-import layer_cake from "../assets/layer_cake.png"
+import layer_cake from "../assets/layer_cake.png";
+import {getCustomCardImageAPICall} from "../utils/apiWrapper";
+
 const Home = () => {
   useEffect(() => {
     AOS.init({ duration: 1000 });
@@ -28,10 +30,25 @@ const Home = () => {
     { name: 'Fresh Fruit Cake', price: '₹800', veg: 'Veg', img: fruite_cake },
   ];
 
-  const customProducts = [
-    { img: custom1 }, { img: custom2 }, { img: custom3 },
-    { img: custom1 }, { img: custom2 }, { img: custom3 }
-  ];
+  const [customProducts, setCustomProducts] = useState([
+    { img: chocolate_cakes }, { img: red_velvet_cakes }, { img: fruite_cake }
+  ]);
+
+  useEffect(() => {
+    const loadCustomCakeImages = async () => {
+      try {
+        const data = await getCustomCardImageAPICall('/api/custom-cakes/images');
+        debugger;
+        if (data?.success && data?.data?.images?.length > 0) {
+          setCustomProducts(data.data.images);
+        }
+      } catch (error) {
+        console.error('Error loading custom cake images:', error);
+      }
+    };
+
+    loadCustomCakeImages();
+  }, []);
 
   const occasionProducts = [
     { img: custom1, buttonName: "WEDDING CAKES", link: "/product/wedding-cake" },
@@ -49,6 +66,7 @@ const Home = () => {
     { name: 'Vanilla Delight', image: fruite_cake }
   ];
 
+  
   return (
     <>
     <div className="home">

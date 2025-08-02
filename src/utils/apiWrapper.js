@@ -156,3 +156,95 @@ export const submitCakeRequest = async (formData) => {
     throw error;
   }
 };
+
+export const getCustomCardImageAPICall = async (endpoint, options = {}) => {
+  try {
+    const config = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      ...options,
+    };
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    const data = await response.json();
+
+    if (!response.ok) {
+      showCompactError(data.message || 'An error occurred');
+      throw new Error(data.error || 'API_ERROR');
+    }
+
+    return data;
+  } catch (error) {
+    if (!navigator.onLine) {
+      showCompactError('No internet connection. Please check your network.');
+    } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      showCompactError('Unable to connect to server. Please try again.');
+    }
+    
+    throw error;
+  }
+};
+
+// Updated apiWrapper functions
+// Updated apiWrapper functions for single JSON storage
+export const fetchQuickSuggestions = async () => {
+  try {
+    const data = await makeAPICall('/api/quick-suggestions');
+    return data.data || {};
+  } catch (error) {
+    if (error.message !== 'JWT_EXPIRED' && error.message !== 'API_ERROR') {
+      showCompactError('Failed to fetch quick suggestions. Please try again.');
+    }
+    return {};
+  }
+};
+
+export const saveAllQuickSuggestions = async (suggestions) => {
+  try {
+    const data = await makeAPICall('/api/quick-suggestions', {
+      method: 'POST',
+      body: JSON.stringify({ suggestions }),
+    });
+    showCompactSuccess('All suggestions saved successfully!');
+    return data.data;
+  } catch (error) {
+    if (error.message !== 'JWT_EXPIRED' && error.message !== 'API_ERROR') {
+      showCompactError('Failed to save quick suggestions. Please try again.');
+    }
+    throw error;
+  }
+};
+
+export const updateQuickSuggestions = async (suggestions) => {
+  try {
+    const data = await makeAPICall('/api/quick-suggestions', {
+      method: 'PUT',
+      body: JSON.stringify({ suggestions }),
+    });
+    showCompactSuccess('Suggestions updated successfully!');
+    return data.data;
+  } catch (error) {
+    if (error.message !== 'JWT_EXPIRED' && error.message !== 'API_ERROR') {
+      showCompactError('Failed to update suggestions. Please try again.');
+    }
+    throw error;
+  }
+};
+
+export const clearAllQuickSuggestions = async () => {
+  try {
+    const data = await makeAPICall('/api/quick-suggestions', {
+      method: 'DELETE',
+    });
+    showCompactSuccess('All suggestions cleared successfully!');
+    return data.data;
+  } catch (error) {
+    if (error.message !== 'JWT_EXPIRED' && error.message !== 'API_ERROR') {
+      showCompactError('Failed to clear suggestions. Please try again.');
+    }
+    throw error;
+  }
+};
+
