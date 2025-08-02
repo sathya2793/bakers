@@ -1,7 +1,48 @@
 // utils/apiWrapper.js
-import { showCompactSuccess, showCompactError, showCompactWarning } from './notifications';
+import { showCompactSuccess, showCompactError } from './notifications';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5005';
+
+// General API call helper without JWT (public API)
+const makePublicAPICall = async (endpoint, options = {}) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      showCompactError(data.message || 'Failed to connect to server');
+      throw new Error(data.error || 'API_ERROR');
+    }
+    return data;
+  } catch (error) {
+    if (!navigator.onLine) {
+      showCompactError('No internet connection. Please check your network.');
+    } else {
+      showCompactError(error.message || 'Network or server error');
+    }
+    throw error;
+  }
+};
+
+// Fetch all products (public)
+export const fetchAllProducts = async () => {
+  const data = await makePublicAPICall('/api/productscard');
+  return data.data || [];  // Ensure array
+};
+
+// Separate fetch calls for standard or customised cakes
+export const fetchStandardCakes = async () => {
+  const products = await fetchAllProducts();
+  return products.filter(product => product.customizable === false);
+};
+
+export const fetchCustomisedCakes = async () => {
+  const products = await fetchAllProducts();
+  return products.filter(product => product.customizable === true);
+};
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('googleToken');
