@@ -13,6 +13,20 @@ import {
   showCompactSuccess,
   showCompactError
 } from '../utils/notifications';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+  useSortable
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 // ViewSection component for displaying products
 function ViewSection({ 
@@ -227,6 +241,7 @@ const Dashboard = () => {
     if (activeSection === 'view' && userInfo) {
       fetchProducts();
     }
+    fetchQuickSuggestions();
   }, [activeSection, userInfo]);
   
   // Fetch quick suggestions on component mount
@@ -235,7 +250,8 @@ const Dashboard = () => {
       fetchQuickSuggestions();
     }
   }, [userInfo]);
-  
+
+
   // Fetch quick suggestions from the API
 // Fix in Dashboard component - prevent API duplication
 const fetchQuickSuggestions = async () => {
@@ -518,159 +534,118 @@ const QuickSuggestionsManager = () => {
     tag: [],
     type: []
   });
+  const [originalSuggestions, setOriginalSuggestions] = useState({});
   const [saveLoading, setSaveLoading] = useState(false);
-  
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const [newSuggestion, setNewSuggestion] = useState({
+    flavor: '',
+    event: '',
+    theme: '',
+    ingredients: '',
+    tag: '',
+    type: ''
+  });
+
+  const sensors = useSensors(useSensor(PointerSensor));
+
   useEffect(() => {
     fetchSavedSuggestions();
   }, []);
-  
+
   const fetchSavedSuggestions = async () => {
     setLoading(true);
     try {
       const suggestions = await fetchQuickSuggestionsAPI() || {};
-      
-      // Initialize editing state with fetched data
-      const initialEditingState = {
-        flavor: [],
-        event: [],
-        theme: [],
-        ingredients: [],
-        tag: [],
-        type: []
-      };
-      
-      // Populate with existing data
-      Object.entries(suggestions || {}).forEach(([field, values]) => {
-        if (initialEditingState.hasOwnProperty(field) && Array.isArray(values)) {
-          initialEditingState[field] = values.map(value => ({ 
-            value, 
-            id: Math.random().toString(36).substr(2, 9) 
-          }));
-        }
-      });
-      
-      setEditingSuggestions(initialEditingState);
+      const formatted = {};
+      for (let key of Object.keys(newSuggestion)) {
+        formatted[key] = (suggestions[key] || []).map(value => ({
+          id: Math.random().toString(36).substr(2, 9),
+          value
+        }));
+      }
+      setEditingSuggestions(formatted);
+      setOriginalSuggestions(formatted);
+      setHasChanges(false);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
     } finally {
       setLoading(false);
     }
   };
-  
-  const handleSaveAllSuggestions = async () => {
-    // Validate and check for duplicates
-    let hasErrors = false;
-    const duplicateErrors = [];
-    
-    Object.entries(editingSuggestions).forEach(([field, suggestions]) => {
-      suggestions.forEach((suggestion, index) => {
-        const trimmedValue = suggestion.value.trim();
-        if (trimmedValue && checkForDuplicates(field, trimmedValue, index)) {
-          duplicateErrors.push(`"${trimmedValue}" in ${field}`);
-          hasErrors = true;
-        }
-      });
-    });
-    
-    if (hasErrors) {
-      showError(`Duplicate suggestions found: ${duplicateErrors.join(', ')}`, 'Duplicates Not Allowed!');
+
+  const handleAddSuggestion = (field) => {
+    const value = newSuggestion[field].trim();
+    if (!value) return;
+
+    if (
+      editingSuggestions[field].some(
+        (s) => s.value.toLowerCase() === value.toLowerCase()
+      )
+    ) {
+      showError(`"${value}" already exists in ${field}!`);
       return;
     }
-    
+
+    setEditingSuggestions((prev) => ({
+      ...prev,
+      [field]: [
+        { id: Math.random().toString(36).substr(2, 9), value },
+        ...prev[field] // add new item at the top
+      ]
+    }));
+
+    setNewSuggestion((prev) => ({ ...prev, [field]: '' }));
+    setHasChanges(true);
+  };
+
+  const handleDeleteSuggestion = async (field, index, value) => {
+    const result = await showDeleteConfirmation(value, 'Suggestion');
+    if (result.isConfirmed) {
+      setEditingSuggestions((prev) => {
+        const updated = [...prev[field]];
+        updated.splice(index, 1);
+        return { ...prev, [field]: updated };
+      });
+      setHasChanges(true);
+      showCompactSuccess(`Removed "${value}" from ${field}`);
+    }
+  };
+
+  const handleDragEnd = (event, field) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = editingSuggestions[field].findIndex((s) => s.id === active.id);
+    const newIndex = editingSuggestions[field].findIndex((s) => s.id === over.id);
+
+    setEditingSuggestions((prev) => ({
+      ...prev,
+      [field]: arrayMove(prev[field], oldIndex, newIndex)
+    }));
+    setHasChanges(true);
+  };
+
+  const handleSaveAllSuggestions = async () => {
     setSaveLoading(true);
     try {
-      // Convert editing state to API format
-      const suggestionsToSave = {};
-      Object.entries(editingSuggestions).forEach(([field, suggestions]) => {
-        const cleanValues = suggestions
-          .map(s => s.value.trim())
-          .filter(value => value.length > 0);
-          
-        if (cleanValues.length > 0) {
-          suggestionsToSave[field] = cleanValues;
-        }
-      });
-      
-      // Save all suggestions in one API call
-      await saveAllQuickSuggestions(suggestionsToSave);
-      
-      // Update parent component's custom suggestions
-      setCustomSuggestions(suggestionsToSave);
-      
-      // Refresh data
-      await fetchSavedSuggestions();
-      
-      const totalSuggestions = Object.values(suggestionsToSave).reduce((sum, values) => sum + values.length, 0);
-      const fieldsCount = Object.keys(suggestionsToSave).length;
-      showCompactSuccess(`Successfully saved`);
-    } catch (error) {
-      console.error('Error saving suggestions:', error);
-      showError('Failed to save suggestions. Please try again.');
+      const payload = {};
+      for (let key of Object.keys(editingSuggestions)) {
+        payload[key] = editingSuggestions[key].map((s) => s.value.trim());
+      }
+
+      await saveAllQuickSuggestions(payload);
+      setOriginalSuggestions(editingSuggestions);
+      setHasChanges(false);
+      showCompactSuccess('Suggestions saved successfully!');
+    } catch (err) {
+      console.error(err);
+      showError('Failed to save suggestions');
     } finally {
       setSaveLoading(false);
     }
   };
-  
-  const handleAddNewField = (field) => {
-    setEditingSuggestions(prev => ({
-      ...prev,
-      [field]: [...prev[field], { value: '', id: Math.random() }]
-    }));
-  };
-  
-  const handleSuggestionChange = (field, index, value) => {
-    setEditingSuggestions(prev => {
-      const updated = [...prev[field]];
-      updated[index] = { ...updated[index], value };
-      return {
-        ...prev,
-        [field]: updated
-      };
-    });
-  };
-  
-  const handleRemoveField = (field, index) => {
-    setEditingSuggestions(prev => {
-      const updated = [...prev[field]];
-      updated.splice(index, 1);
-      return {
-        ...prev,
-        [field]: updated
-      };
-    });
-  };
-  
-  const checkForDuplicates = (field, currentValue, currentIndex) => {
-    const trimmedValue = currentValue.trim().toLowerCase();
-    if (!trimmedValue) return false;
-    
-    // Check against other suggestions in the same field
-    const hasDuplicateInCurrentField = editingSuggestions[field].some((suggestion, index) => 
-      index !== currentIndex && 
-      suggestion.value.trim().toLowerCase() === trimmedValue
-    );
-    
-    // Check against hardcoded suggestions
-    const hasDuplicateInHardcoded = (SUGGESTIONS[field] || []).some(suggestion =>
-      suggestion.toLowerCase() === trimmedValue
-    );
-    
-    return hasDuplicateInCurrentField || hasDuplicateInHardcoded;
-  };
-  
-  const handleDeleteSuggestion = async (field, value, index) => {
-    if (value.trim()) {
-      const result = await showDeleteConfirmation(value, 'Suggestion');
-      if (result.isConfirmed) {
-        handleRemoveField(field, index);
-        showCompactSuccess(`Removed "${value}" from ${field} suggestions!`);
-      }
-    } else {
-      handleRemoveField(field, index);
-    }
-  };
-  
-  // Fields configuration
+
   const fields = [
     { id: 'flavor', label: 'Flavor' },
     { id: 'event', label: 'Event' },
@@ -679,7 +654,7 @@ const QuickSuggestionsManager = () => {
     { id: 'tag', label: 'Tag' },
     { id: 'type', label: 'Type' }
   ];
-  
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -688,63 +663,84 @@ const QuickSuggestionsManager = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="quick-suggestions-manager create-form-container">
       <div className="form-header">
         <h2>Manage Quick Suggestions</h2>
+        <p>Drag to reorder, add, or remove suggestions.</p>
       </div>
-      
-      <div className="form-grid">
-        {fields.map(field => (
-          <div key={field.id} className="form-group full-width">
-            <label>
-              {field.label} Suggestions 
-              <span className="suggestion-count">({editingSuggestions[field.id].filter(s => s.value.trim()).length})</span>
-            </label>
-            
-            <div className="weights-container">
-              {editingSuggestions[field.id].map((suggestion, index) => (
-                <div key={suggestion.id} className="weight-input-row">
-                  <input
-                    placeholder={`${field.label} suggestion...`}
-                    value={suggestion.value}
-                    onChange={(e) => handleSuggestionChange(field.id, index, e.target.value)}
-                    className={checkForDuplicates(field.id, suggestion.value, index) ? 'duplicate-input' : ''}
-                  />
-                  <button 
-                    type="button" 
-                    className="delete-weight-btn"
-                    onClick={() => handleDeleteSuggestion(field.id, suggestion.value, index)}
-                    title="Remove suggestion"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              <button 
-                type="button" 
-                className="add-weight-btn"
-                onClick={() => handleAddNewField(field.id)}
-              >
-                Add {field.label} Suggestion
-              </button>
-            </div>
+
+      {fields.map((field) => (
+        <div key={field.id} className="qs-field-card">
+          <div className="qs-field-header">
+            <span>{field.label}</span>
+            <span className="qs-count">
+              {editingSuggestions[field.id]?.length || 0} items
+            </span>
           </div>
-        ))}
-      </div>
-      
+
+          {/* Drag & Drop with dnd-kit */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={(event) => handleDragEnd(event, field.id)}
+          >
+            <SortableContext
+              items={editingSuggestions[field.id].map((s) => s.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="qs-tags-container">
+                {editingSuggestions[field.id].length > 0 ? (
+                  editingSuggestions[field.id].map((s, index) => (
+                    <SortableItem
+                      key={s.id}
+                      id={s.id}
+                      value={s.value}
+                      onDelete={() =>
+                        handleDeleteSuggestion(field.id, index, s.value)
+                      }
+                    />
+                  ))
+                ) : (
+                  <p className="qs-empty">No suggestions yet</p>
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
+
+          {/* Add New Suggestion */}
+          <div className="qs-add-section">
+            <input
+              type="text"
+              placeholder={`Add new ${field.label}`}
+              value={newSuggestion[field.id]}
+              onChange={(e) =>
+                setNewSuggestion({ ...newSuggestion, [field.id]: e.target.value })
+              }
+              onKeyDown={(e) => e.key === 'Enter' && handleAddSuggestion(field.id)}
+            />
+            <button
+              type="button"
+              className="qs-add-btn"
+              onClick={() => handleAddSuggestion(field.id)}
+            >
+              ➕
+            </button>
+          </div>
+        </div>
+      ))}
+
       <div className="form-actions">
-        <button 
+        <button
           type="button"
-          className="submit-btn"
+          className={`submit-btn ${!hasChanges ? 'disabled' : ''}`}
           onClick={handleSaveAllSuggestions}
-          disabled={saveLoading}
+          disabled={!hasChanges || saveLoading}
         >
           {saveLoading ? (
             <>
-              <span className="loading-spinner"></span>
-              Saving All Changes...
+              <span className="loading-spinner"></span> Saving...
             </>
           ) : (
             'Save All Changes'
@@ -754,6 +750,35 @@ const QuickSuggestionsManager = () => {
     </div>
   );
 };
+
+// Sortable Item for dnd-kit
+const SortableItem = ({ id, value, onDelete }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <span ref={setNodeRef} style={style} className="qs-tag">
+      <span className="qs-drag-handle" {...attributes} {...listeners}>
+        ⠿
+      </span>
+      <span className="qs-tag-text">{value}</span>
+      <button
+        className="qs-tag-delete"
+        onClick={(e) => {
+          e.stopPropagation(); // prevent drag event
+          onDelete();
+        }}
+      >
+        ×
+      </button>
+    </span>
+  );
+};
+
 
   return (
     <div className="app">
@@ -783,16 +808,18 @@ const QuickSuggestionsManager = () => {
               submitLoading={submitLoading}
               customSuggestions={customSuggestions}
               setCustomSuggestions={setCustomSuggestions}
+              fetchQuickSuggestions={fetchQuickSuggestions} 
               onChangeImageUrls={(newImages) => {
                 setFormData({ ...formData, image_url: newImages });
               }}
             />
           ) : activeSection === 'suggestions' ? (
-            <QuickSuggestionsManager />
+            <QuickSuggestionsManager fetchQuickSuggestions={fetchQuickSuggestions} customSuggestions={customSuggestions}/>
           ) : (
             <ViewSection
               products={filteredProducts}
               handleEdit={handleEdit}
+              fetchQuickSuggestions={fetchQuickSuggestions} 
               handleDelete={handleDelete}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}

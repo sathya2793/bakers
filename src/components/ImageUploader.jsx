@@ -6,7 +6,7 @@ import {
 } from '../utils/notifications';
 import { uploadImage } from '../utils/apiWrapper';
 
-export default function ImageUploader({ images, onChange }) {
+export default function ImageUploader({ images = [], onChange }) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
