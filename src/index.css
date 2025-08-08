@@ -110,3 +110,7 @@ section {
   transform: scale(1.05);
   cursor: pointer;
 }
+
+input::placeholder,textPath::placeholder{
+  opacity: 0.5;
+}
