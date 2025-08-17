@@ -173,6 +173,20 @@ export default function CartDrawer({ cart, setCart, open, onClose }) {
             </List>
           )}
           <Divider sx={{ my: 2, bgcolor: COLORS.accent }} />
+            <Button
+            variant="outlined"
+            color="error"
+            fullWidth
+            disabled={cart.length === 0}
+            sx={{
+              mb: 2,
+              fontWeight: 700,
+              borderRadius: 2,
+            }}
+            onClick={() => setCart([])}
+          >
+            Clear All
+          </Button>
           <Button
             variant="contained"
             fullWidth
