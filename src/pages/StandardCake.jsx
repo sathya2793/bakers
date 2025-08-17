@@ -266,7 +266,7 @@ const MobileFixedButton = styled(MuiButton)`
   && {
     position: fixed;
     top: 60px;
-    z-index: 1700;
+    z-index: 999;
     min-width: 120px;
     font-weight: 700;
     background: ${COLORS.accent};
