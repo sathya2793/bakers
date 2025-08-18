@@ -51,7 +51,7 @@ function ViewSection({
               <i className="search-icon">🔍</i>
               <input
                 type="text"
-                placeholder="Search products by title..."
+                placeholder="Search products by title or by id..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="search-input"
@@ -517,9 +517,12 @@ const handleCustomizableToggle = async (e) => {
   };
 
   const filteredProducts =Array.isArray(products) 
-  ? products?.filter((product) => 
+  ? products.filter(product =>
       product &&
-      product.title?.toLowerCase()?.includes(searchTerm?.toLowerCase())
+      (
+        product.title?.toLowerCase().includes(searchTerm?.toLowerCase()) ||
+        product.id?.toString().toLowerCase().includes(searchTerm?.toLowerCase())
+      )
     )
   : [];
 
