@@ -116,7 +116,7 @@ export default function CartDrawer({ cart, setCart, open, onClose }) {
                         sx={{
                           width: 44,
                           height: 44,
-                          bgcolor: "#fff7ed",
+                          bgcolor: "rgb(145 78 32)",
                         }}
                       />
                     ) : (
@@ -199,15 +199,16 @@ export default function CartDrawer({ cart, setCart, open, onClose }) {
               boxShadow: "0 4px 12px #faad5922",
               "&:hover:not(:disabled)": { bgcolor: COLORS.accentDark }
             }}
-            onClick={() => setCheckoutOpen(true)}
-          >Goto contact-us page(coming soon)</Button>
+            onClick={() => {
+              onClose();
+              window.localStorage.setItem('cake_cart', JSON.stringify(cart));
+              window.location.href = '/choose-cake/contact-us';
+            }}
+          >
+            Contact Us Request
+          </Button>
         </Box>
       </Drawer>
-      {/* <CheckoutDialog
-        open={checkoutOpen}
-        onClose={() => setCheckoutOpen(false)}
-        cart={cart}
-      /> */}
     </>
   );
 }
