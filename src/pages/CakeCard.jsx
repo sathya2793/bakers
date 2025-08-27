@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import {
   Autocomplete,
   TextField,
@@ -22,11 +22,12 @@ import {
 import CartDrawer from "../components/CartDrawer";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import { fetchStandardCakes } from "../utils/apiWrapper";
+import { fetchAllCakes } from "../utils/apiWrapper";
 import { useLocation } from "react-router-dom";
 
+// Styles/constants
 const CARD_WIDTH = 320;
-const CARD_HEIGHT = 420;
+const CARD_HEIGHT = 460;
 const COLORS = {
   primary: "#8B4513",
   background: "linear-gradient(110deg, #f4f1ee 60%, #fae5d7 100%)",
@@ -38,50 +39,37 @@ const COLORS = {
   success: "#35b257",
 };
 
-// Main container split two columns on desktop, vertical on mobile
+// Layout and Sidebar
 const Layout = styled.div`
   display: flex;
   gap: 24px;
   padding: 110px 4vw 70px 4vw;
   background: ${COLORS.background};
   min-height: 100vh;
-
   @media (max-width: 960px) {
     flex-direction: column;
     padding: 110px 12px 64px 12px;
   }
 `;
-
-// Sidebar container (filter + view cart button stacked)
 const Sidebar = styled.aside`
   width: 300px;
   background: ${COLORS.cardBg};
   border-radius: 28px;
   box-shadow: ${COLORS.shadow};
-  padding: 36px 26px;
+  padding: 32px 18px 24px 18px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
   font-family: "Poppins", sans-serif;
   position: sticky;
-  top: 100px; /* sticky below header/padding */
+  top: 100px;
   max-height: fit-content;
   @media (max-width: 960px) {
     display: none;
   }
 `;
 
-const FilterHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-  @media (max-width: 960px) {
-    gap: 2em;
-    justify-content: left;
-  }
-`;
-
+// Section title
 const SectionTitle = styled.h3`
   font-size: 1.3rem;
   font-weight: 800;
@@ -90,14 +78,13 @@ const SectionTitle = styled.h3`
   letter-spacing: 0.7px;
 `;
 
-// Grid container for cards, takes rest of space
+// Card Grid
 const Grid = styled.div`
   flex: 1;
   display: grid;
   grid-template-columns: repeat(3, ${CARD_WIDTH}px);
   gap: 24px;
   justify-content: start;
-
   @media (max-width: 1000px) {
     grid-template-columns: repeat(2, ${CARD_WIDTH}px);
     justify-content: center;
@@ -126,90 +113,69 @@ const Card = styled.div`
   border-radius: 18px;
   box-shadow: 0 8px 28px rgba(139, 69, 19, 0.1);
   background: rgba(255, 255, 255, 0.7);
-  overflow: hidden;
-  position: relative;
   margin: 20px auto;
 `;
 
+// Card image section
 const ImageWrapper = styled.div`
   width: 100%;
-  height: 100%;
+  height: 163px;
   position: relative;
   background: #fff7ed;
 `;
-
-const ImgMain = styled.img`
-  width: 100%;
-  height: 163px;
-  object-fit: cover;
-  display: block;
-  user-select: none;
-`;
-
-const ArrowBtn = styled.button`
-  position: absolute;
-  top: 50%;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 50%;
-  border: none;
-  width: 38px;
-  height: 38px;
-  box-shadow: 0 2px 8px #0003;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  transform: translateY(-50%);
-  z-index: 8;
-  color: #b57d2c;
-  transition: background 0.2s;
-  &:hover {
-    background: #faad59;
-    color: #fff;
-  }
-`;
-
-const SmallArrowLeft = styled(ArrowBtn)`
-  left: 8px;
-`;
-const SmallArrowRight = styled(ArrowBtn)`
-  right: 8px;
-`;
-
+// fallback if no image
 const CakeFallbackImage = styled.div`
   width: 100%;
   height: 163px;
-  font-size: 44px;
-  color: #faad59;
   background: linear-gradient(130deg, #f4e4d8 80%, #fae5d7 100%);
+  border-radius: 18px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
+  align-items: center;
   user-select: none;
+  color: #faad59;
+  font-weight: 400;
+  font-size: 44px;
+
+  .icon {
+    font-size: 44px;
+    line-height: 1;
+  }
+
+  .text {
+    font-size: 1rem;
+    margin-top: 4px;
+  }
 `;
 
+// Card content
 const ContentBox = styled.div`
-  padding: 18px;
+  padding: ${(props) =>
+    props.customizable ? "0px 14px 20px 16px" : "12px 14px 20px 16px"};
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  cursor: pointer;
   user-select: none;
+  gap: 4px;
 `;
-
+// Fixed minimum height for title/desc/flavor so each card aligns
 const Title = styled.h2`
   font-weight: 900;
-  font-size: 1.17rem;
+  font-size: 1.19rem;
   color: ${COLORS.primary};
-  margin: 0 0 5px 0;
+  margin: 0 0 7px 0;
+  min-height: 49px;
   letter-spacing: 0.89px;
+  display: flex;
+  align-items: flex-end;
 `;
-
 const Desc = styled.p`
-  font-size: 0.98rem;
+  font-size: 0.97rem;
   color: #5d3a1e;
-  margin: 0 0 12px 0;
-  line-height: 1.5;
+  margin: 0 0 8px 0;
+  min-height: 42px;
+  line-height: 1.45;
   text-overflow: ellipsis;
   overflow: hidden;
   display: -webkit-box;
@@ -217,44 +183,24 @@ const Desc = styled.p`
   -webkit-box-orient: vertical;
 `;
 
-const OutstockOverlay = styled.div`
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.73);
-  color: ${COLORS.error};
-  font-weight: 900;
-  font-size: 1.2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  letter-spacing: 1.2px;
-  z-index: 12;
-  user-select: none;
-`;
-
-const AddCartBtn = styled.button`
-  margin-top: auto;
+// Button
+const RequestBtn = styled.button`
   width: 100%;
   font-weight: 900;
   font-size: 1.18rem;
-  padding: 16px 0;
+  padding: 13px 0;
   background: linear-gradient(to right, #fdae57, #e9af73);
   border: none;
-  border-radius: 24px;
+  border-radius: 18px;
   color: #fff;
   box-shadow: 0 8px 28px #faad59b5;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.22s ease;
   user-select: none;
-
   &:hover:not(:disabled) {
     background: linear-gradient(to right, #ffbf74, #f2bc82);
-    box-shadow: 0 10px 35px #faad59db;
     transform: scale(1.04);
   }
-
   &:disabled {
     background: ${COLORS.success};
     box-shadow: none;
@@ -262,11 +208,11 @@ const AddCartBtn = styled.button`
   }
 `;
 
-// Buttons fixed on mobile top left and right
+// Cart (Requests) button for mobile
 const MobileFixedButton = styled(MuiButton)`
   && {
     position: fixed;
-    top: 60px;
+    top: 62px;
     z-index: 999;
     min-width: 120px;
     font-weight: 700;
@@ -274,7 +220,6 @@ const MobileFixedButton = styled(MuiButton)`
     color: #fff;
     box-shadow: 0 4px 14px #f7bc9ca6;
     user-select: none;
-
     @media (min-width: 900px) {
       display: none;
     }
@@ -283,17 +228,15 @@ const MobileFixedButton = styled(MuiButton)`
 const FilterButtonMobile = styled(MobileFixedButton)`
   left: 12px;
 `;
-
 const CartButtonMobile = styled(MobileFixedButton)`
   right: 12px;
 `;
 
-// Modal with fade backdrop
+// Modal/Drawer styling
 const ModalBackdrop = styled(Backdrop)``;
-
 const ModalWrapper = styled(MuiBox)`
   position: absolute;
-  top: 60%;
+  top: 50%;
   left: 50%;
   background: #fff;
   border-radius: 20px;
@@ -305,17 +248,15 @@ const ModalWrapper = styled(MuiBox)`
   overflow-y: auto;
   transform: translate(-50%, -50%);
   outline: none;
-  user-select: none;
   display: flex;
   flex-direction: column;
-
   @media (max-width: 600px) {
     width: 98vw;
-    padding: 24px 16px;
+    padding: 24px 12px;
   }
 `;
 
-// Modal Top Close Button
+// Close button
 const ModalCloseBtn = styled(IconButton)`
   position: absolute !important;
   top: 12px;
@@ -324,55 +265,12 @@ const ModalCloseBtn = styled(IconButton)`
   z-index: 1800 !important;
 `;
 
-// Fullscreen image gallery with arrows in modal
-const FullscreenImageWrapper = styled.div`
-  position: relative;
-  width: 100%;
-  height: 400px;
-
-  @media (max-width: 600px) {
-    height: 300px;
-  }
-`;
-
-const FullscreenImg = styled.img`
-  width: 100%;
-  height: 100%;
-  border-radius: 18px;
-  object-fit: contain;
-  user-select: none;
-  pointer-events: none;
-`;
-
-const ArrowButton = styled(IconButton)`
-  position: absolute !important;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.75) !important;
-  box-shadow: 0 4px 10px rgb(0 0 0 / 0.25) !important;
-  color: ${COLORS.primary} !important;
-  z-index: 1700 !important;
-
-  &:hover {
-    background: #faad59 !important;
-    color: white !important;
-  }
-`;
-
-const ArrowLeft = styled(ArrowButton)`
-  left: 10px !important;
-`;
-
-const ArrowRight = styled(ArrowButton)`
-  right: 10px !important;
-`;
-
+// For query params
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-
-export default function StandardCake() {
+export default function CakeCard() {
   const [cakes, setCakes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -387,30 +285,70 @@ export default function StandardCake() {
   const [stockFilter, setStockFilter] = useState("In Stock");
   const [sortField, setSortField] = useState("createdAt");
 
-  const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [weightSelections, setWeightSelections] = useState({});
 
-  // For cards images index - track current image per cake in grid view
   const [imgIndexes, setImgIndexes] = useState({});
-  // Modal data and modal gallery index for fullscreen images
   const [detailModalData, setDetailModalData] = useState(null);
   const [detailModalImgIndex, setDetailModalImgIndex] = useState(0);
 
-  // For mobile filter overlay open
   const [filterOpen, setFilterOpen] = useState(false);
 
   const query = useQuery();
 
+  const location = useLocation();
 
-  // Fetch cakes once
+  const [cart, setCart] = useState(() => {
+    try {
+      const stored = localStorage.getItem("myRequestsCart");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("myRequestsCart", JSON.stringify(cart));
+  }, [cart]);
+
   useEffect(() => {
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchStandardCakes();
-        setCakes(data);
+        const all = await fetchAllCakes();
+        const params = new URLSearchParams(location.search);
+        const customizableParam = params.get("customizable");
+        let filtered = all;
+        if (customizableParam !== null) {
+          const isCustom = customizableParam === "true";
+          filtered = all.filter((cake) => cake.customizable === isCustom);
+        }
+        setCakes(filtered);
+        // ...other filter params as needed
+      } catch (e) {
+        setError(e.message || "Failed to load cakes");
+      }
+      setLoading(false);
+    })();
+  }, [location.search]);
+
+  // Fetch and query-param 'customizable' filter
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const all = await fetchAllCakes();
+        const customizableParam = query.get("customizable");
+
+        let filtered = all;
+        if (customizableParam !== null) {
+          const isCustom = customizableParam === "true";
+          filtered = all.filter((cake) => cake.customizable === isCustom);
+        }
+        setCakes(filtered);
+
         const flavourFilter = query.get("flavour");
         const eventFilter = query.get("event");
         if (flavourFilter) setFlavour([flavourFilter]);
@@ -422,7 +360,7 @@ export default function StandardCake() {
     })();
   }, []);
 
-  // Options for filters (memoized)
+  // Options for filters
   const events = useMemo(
     () => Array.from(new Set(cakes.flatMap((c) => c.event || []))),
     [cakes]
@@ -490,46 +428,32 @@ export default function StandardCake() {
     sortField,
   ]);
 
-  // Add to cart
+  // Add to mail request
   const addToCart = (cake) => {
     if (!cart.find((item) => item.id === cake.id)) {
       const selectedWeight =
         weightSelections[cake.id] ||
         cake.defaultWeight ||
         cake.availableWeights?.[0]?.weight ||
-        "0.5kg";
+        "1";
       setCart([...cart, { ...cake, selectedWeight, comment: "" }]);
     }
   };
 
-  // Handle image thumbnail click inside card
-  const handleImgThumb = (id, idx, e) => {
-    e.stopPropagation(); // prevent modal open on image click
-    setImgIndexes((prev) => ({ ...prev, [id]: idx }));
-  };
-
-  // Card body click to open modal with fullscreen gallery
+  // Card image click handler
   const handleCardClick = (e, cake) => {
     if (
       e.target.closest("button") ||
       e.target.closest("select") ||
-      e.target.closest(".thumbnail") || // thumbnail image, no modal
-      e.target.closest(".img-main") // main image no modal
+      e.target.closest(".thumbnail") ||
+      e.target.closest(".img-main")
     )
       return;
-
     setDetailModalData(cake);
     setDetailModalImgIndex(0);
   };
 
-  // Modal close only with icon or ESC key
-  const handleModalClose = (event, reason) => {
-    if (reason && (reason === "backdropClick" || reason === "clickaway"))
-      return;
-    setDetailModalData(null);
-  };
-
-  // Modal gallery navigation
+  // Modal navigation
   const modalPrevImage = useCallback(() => {
     if (!detailModalData) return;
     setDetailModalImgIndex((idx) =>
@@ -546,7 +470,7 @@ export default function StandardCake() {
 
   return (
     <>
-      {/* Mobile: fixed Filter and Cart buttons top left/right */}
+      {/* Mobile Requests/Filter Buttons */}
       <FilterButtonMobile
         startIcon={<FilterAlt />}
         variant="contained"
@@ -556,7 +480,6 @@ export default function StandardCake() {
       >
         Filter
       </FilterButtonMobile>
-
       <CartButtonMobile
         startIcon={<ShoppingCart />}
         variant="contained"
@@ -564,7 +487,7 @@ export default function StandardCake() {
         aria-label="Open cart drawer"
         sx={{ display: { xs: "flex", md: "none" } }}
       >
-        Cart ({cart.length})
+        My Requests ({cart.length})
       </CartButtonMobile>
 
       {/* Mobile filter overlay */}
@@ -578,38 +501,33 @@ export default function StandardCake() {
           BackdropProps={{ timeout: 500 }}
         >
           <Fade in={true}>
-            <ModalWrapper
-              tabIndex={-1}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="filter-panel-title"
-            >
+            <ModalWrapper tabIndex={-1} role="dialog" aria-modal="true">
               <ModalCloseBtn
                 onClick={() => setFilterOpen(false)}
                 aria-label="Close filter panel"
               >
                 <Close />
               </ModalCloseBtn>
-             <FilterHeader >
-            <SectionTitle>Filter Cakes</SectionTitle>
-            <MuiButton
-              variant="outlined"
-              size="small"
-              onClick={() => {
-                setSearch([]);
-                setEggless([]);
-                setTheme([]);
-                setType([]);
-                setEvent([]);
-                setFlavour([]);
-                setTag([]);
-                setStockFilter("In Stock");
-              }}
-              aria-label="Clear all filters"
-            >
-              Clear All
-            </MuiButton>
-          </FilterHeader>
+              <SectionTitle>Filter Cakes</SectionTitle>
+              <MuiButton
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  setSearch([]);
+                  setEggless([]);
+                  setTheme([]);
+                  setType([]);
+                  setEvent([]);
+                  setFlavour([]);
+                  setTag([]);
+                  setStockFilter("In Stock");
+                }}
+                aria-label="Clear all filters"
+                sx={{ mb: 2 }}
+              >
+                Clear All
+              </MuiButton>
+
               <Autocomplete
                 multiple
                 freeSolo
@@ -710,36 +628,44 @@ export default function StandardCake() {
         </Modal>
       )}
 
-      {/* Desktop Sidebar with filter + cart button */}
+      {/* Desktop Sidebar w/ My Requests */}
       <Layout>
-        <Sidebar aria-label="Filter and cart">
-          <FilterHeader>
-            <SectionTitle>Filter Cakes</SectionTitle>
-            <MuiButton
-              variant="outlined"
-              size="small"
-              onClick={() => {
-                setSearch([]);
-                setEggless([]);
-                setTheme([]);
-                setType([]);
-                setEvent([]);
-                setFlavour([]);
-                setTag([]);
-                setStockFilter("In Stock");
-              }}
-              aria-label="Clear all filters"
-            >
-              Clear All
-            </MuiButton>
-          </FilterHeader>
-
+        <Sidebar>
+          {/* My Requests button at top */}
+          <MuiButton
+            variant="contained"
+            startIcon={<ShoppingCart />}
+            sx={{ bgcolor: COLORS.accent, fontWeight: 800, borderRadius: 2 }}
+            onClick={() => setCartOpen(true)}
+            aria-label="Open cart drawer"
+          >
+            My Requests ({cart.length})
+          </MuiButton>
+          <SectionTitle>Filter Cakes</SectionTitle>
+          <MuiButton
+            variant="outlined"
+            size="small"
+            onClick={() => {
+              setSearch([]);
+              setEggless([]);
+              setTheme([]);
+              setType([]);
+              setEvent([]);
+              setFlavour([]);
+              setTag([]);
+              setStockFilter("In Stock");
+            }}
+            aria-label="Clear all filters"
+            sx={{ mb: 1 }}
+          >
+            Clear All
+          </MuiButton>
           <Autocomplete
             multiple
             freeSolo
             options={cakes.map((c) => c.title)}
             value={search}
-            onChange={(_, newValue) => setSearch(newValue)}
+            onChange={(_, v) => setSearch(v)}
             renderInput={(params) => (
               <TextField {...params} label="Search Title" size="small" />
             )}
@@ -822,18 +748,9 @@ export default function StandardCake() {
             <option value="Out of Stock">Out of Stock</option>
             <option value="">All</option>
           </TextField>
-          <MuiButton
-            variant="contained"
-            startIcon={<ShoppingCart />}
-            sx={{ bgcolor: COLORS.accent, fontWeight: 800, borderRadius: 2 }}
-            onClick={() => setCartOpen(true)}
-            aria-label="Open cart drawer"
-          >
-            View Cart ({cart.length})
-          </MuiButton>
         </Sidebar>
 
-        {/* Card Grid */}
+        {/* Grid of cards */}
         <Grid role="list">
           {loading ? (
             <Typography sx={{ gridColumn: "1 / -1", textAlign: "center" }}>
@@ -853,14 +770,20 @@ export default function StandardCake() {
           ) : (
             filteredCakes.map((cake) => {
               const outOfStock = cake.availability !== "In Stock";
-              const selectedWeight =
-                weightSelections[cake.id] ||
-                cake.defaultWeight ||
-                cake.availableWeights[0]?.weight ||
-                "0.5kg";
-              const selectedPrice =
-                cake.availableWeights.find((w) => w.weight === selectedWeight)
-                  ?.price || "";
+              const weights_range = cake.weights_range;
+              const price_range = cake.price_range;
+              let selectedWeight;
+              let selectedPrice;
+              if (!cake.customizable) {
+                selectedWeight =
+                  weightSelections[cake.id] ||
+                  cake.defaultWeight ||
+                  cake.availableWeights?.[0]?.weight ||
+                  "1";
+                selectedPrice =
+                  cake.availableWeights.find((w) => w.weight === selectedWeight)
+                    ?.price || "";
+              }
               const inCart = cart.some((item) => item.id === cake.id);
               const images = cake.image_url?.length ? cake.image_url : [];
               const imgIdx = imgIndexes[cake.id] ?? 0;
@@ -871,7 +794,6 @@ export default function StandardCake() {
                   [cake.id]: imgIdx === 0 ? images.length - 1 : imgIdx - 1,
                 }));
               };
-
               const handleNext = (e) => {
                 e.stopPropagation();
                 setImgIndexes((prev) => ({
@@ -890,7 +812,6 @@ export default function StandardCake() {
                   <ImageWrapper
                     onClick={(e) => {
                       e.stopPropagation();
-                      // On image click open fullscreen gallery modal
                       setDetailModalData(cake);
                       setDetailModalImgIndex(imgIdx);
                     }}
@@ -898,34 +819,73 @@ export default function StandardCake() {
                   >
                     {images.length ? (
                       <>
-                        <ImgMain
+                        <img
                           src={images[imgIdx]}
                           alt={cake.title || "Cake"}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            borderRadius: "0px",
+                          }}
                         />
                         {images.length > 1 && (
                           <>
-                            <SmallArrowLeft
+                            <button
+                              style={{
+                                position: "absolute",
+                                left: 8,
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                background: "rgba(255,255,255,0.6)",
+                                borderRadius: "50%",
+                                border: "none",
+                                width: 34,
+                                height: 34,
+                                cursor: "pointer",
+                                color: "#b57d2c",
+                                zIndex: 8,
+                              }}
                               onClick={handlePrev}
                               aria-label="Prev image"
                             >
                               <ChevronLeft />
-                            </SmallArrowLeft>
-                            <SmallArrowRight
+                            </button>
+                            <button
+                              style={{
+                                position: "absolute",
+                                right: 8,
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                background: "rgba(255,255,255,0.6)",
+                                borderRadius: "50%",
+                                border: "none",
+                                width: 34,
+                                height: 34,
+                                cursor: "pointer",
+                                color: "#b57d2c",
+                                zIndex: 8,
+                              }}
                               onClick={handleNext}
                               aria-label="Next image"
                             >
                               <ChevronRight />
-                            </SmallArrowRight>
+                            </button>
                           </>
                         )}
                       </>
                     ) : (
-                      <CakeFallbackImage>🎂</CakeFallbackImage>
+                      <CakeFallbackImage>
+                        <span className="icon" role="img" aria-label="cake">
+                          🎂
+                        </span>
+                        <span className="text">No image available</span>
+                      </CakeFallbackImage>
                     )}
                   </ImageWrapper>
-                  <ContentBox>
+                  <ContentBox customizable={cake.customizable}>
                     <Title>{cake.title}</Title>
-                    <Desc aria-label="Cake description">
+                    <Desc>
                       {cake.description || "No description available."}
                     </Desc>
                     <Typography
@@ -935,77 +895,122 @@ export default function StandardCake() {
                     >
                       Flavor : {cake.flavor || "No flavour"}
                     </Typography>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "10px",
-                        alignItems: "center",
-                        marginBottom: 8,
-                      }}
-                    >
-                      <select
-                        value={selectedWeight}
-                        onChange={(e) =>
-                          setWeightSelections((prev) => ({
-                            ...prev,
-                            [cake.id]: e.target.value,
-                          }))
-                        }
-                        disabled={outOfStock}
-                        aria-label="Select weight"
-                        style={{
-                          fontWeight: 700,
-                          fontSize: "1rem",
-                          borderRadius: 12,
-                          border: "none",
-                          background: "#fff8e7",
-                          color: COLORS.primary,
-                          padding: "7px 16px",
-                          cursor: outOfStock ? "not-allowed" : "pointer",
-                        }}
-                      >
-                        {cake.availableWeights.map((w) => (
-                          <option key={w.weight} value={w.weight}>
-                            {w.weight}
-                          </option>
-                        ))}
-                      </select>
-                      <div
-                        style={{
-                          background: `linear-gradient(105deg, ${COLORS.accent} 70%, ${COLORS.accentDark} 100%)`,
-                          color: "#fff",
-                          fontWeight: 900,
-                          padding: "9px 22px",
-                          fontSize: "1.08rem",
-                          borderRadius: 16,
-                          userSelect: "none",
-                          width: "120px",
-                          textAlign: "center",
-                        }}
-                      >
-                        {selectedPrice ? `₹${selectedPrice}` : "No Price"}
-                      </div>
-                    </div>
+                    {cake.customizable ? (
+                      <>
+                        <div>
+                          <Typography
+                            variant="subtitle1"
+                            color="textPrimary"
+                            sx={{ mb: 1 }}
+                          >
+                            Weight Range(in kg): {weights_range || "N/A"}
+                          </Typography>
+                        </div>
+                        <div>
+                          <Typography
+                            variant="subtitle1"
+                            color="textPrimary"
+                            sx={{ mb: 1 }}
+                          >
+                            Price Range:{" "}
+                            {price_range ? `₹${price_range}` : "No Price"}
+                          </Typography>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            alignItems: "center",
+                            marginBottom: 8,
+                          }}
+                        >
+                          <select
+                            value={selectedWeight}
+                            onChange={(e) =>
+                              setWeightSelections((prev) => ({
+                                ...prev,
+                                [cake.id]: e.target.value,
+                              }))
+                            }
+                            disabled={outOfStock}
+                            aria-label="Select weight"
+                            style={{
+                              fontWeight: 700,
+                              fontSize: "1rem",
+                              borderRadius: 12,
+                              border: "none",
+                              background: "#fff8e7",
+                              color: COLORS.primary,
+                              padding: "7px 16px",
+                              cursor: outOfStock ? "not-allowed" : "pointer",
+                            }}
+                          >
+                            {cake.availableWeights.map((w) => (
+                              <option key={w.weight} value={w.weight}>
+                                {w.weight} kg
+                              </option>
+                            ))}
+                          </select>
+                          <div
+                            style={{
+                              background: `linear-gradient(105deg, ${COLORS.accent} 70%, ${COLORS.accentDark} 100%)`,
+                              color: "#fff",
+                              fontWeight: 900,
+                              padding: "9px 22px",
+                              fontSize: "1.08rem",
+                              borderRadius: 16,
+                              userSelect: "none",
+                              width: "120px",
+                              textAlign: "center",
+                            }}
+                          >
+                            {selectedPrice ? `₹${selectedPrice}` : "No Price"}
+                          </div>
+                        </div>
+                      </>
+                    )}
 
                     {outOfStock ? (
-                      <OutstockOverlay>OUT OF STOCK</OutstockOverlay>
+                      <div
+                        style={{
+                          pointerEvents: "none",
+                          position: "absolute",
+                          inset: 0,
+                          borderRadius: 24,
+                          background: "rgba(255,255,255,0.73)",
+                          color: COLORS.error,
+                          fontWeight: 900,
+                          fontSize: "1.2rem",
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          letterSpacing: "1.2px",
+                          zIndex: 12,
+                          userSelect: "none",
+                        }}
+                      >
+                        OUT OF STOCK
+                      </div>
                     ) : inCart ? (
-                      <AddCartBtn disabled>
-                        Added{" "}
+                      <RequestBtn disabled>
+                        Requested{" "}
                         <CheckCircle
                           sx={{ fontSize: 20, ml: 1, verticalAlign: "middle" }}
                         />
-                      </AddCartBtn>
+                      </RequestBtn>
                     ) : (
-                      <AddCartBtn
-                        aria-label={`Add ${cake.title} to cart`}
+                      <RequestBtn
+                        aria-label={`Request ${cake.title}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           addToCart(cake);
                         }}
                       >
-                        Add to Cart
-                      </AddCartBtn>
+                        Request Cake
+                      </RequestBtn>
                     )}
                   </ContentBox>
                 </Card>
@@ -1015,7 +1020,7 @@ export default function StandardCake() {
         </Grid>
       </Layout>
 
-      {/* Cart drawer */}
+      {/* Requests (Cart) Drawer */}
       <CartDrawer
         cart={cart}
         setCart={setCart}
@@ -1023,10 +1028,10 @@ export default function StandardCake() {
         onClose={() => setCartOpen(false)}
       />
 
-      {/* Fullscreen modal with gallery navigation */}
+      {/* Modal */}
       <Modal
         open={!!detailModalData}
-        onClose={handleModalClose}
+        onClose={() => setDetailModalData(null)}
         aria-labelledby="cake-detail-title"
         closeAfterTransition
         disableEscapeKeyDown={false}
@@ -1056,28 +1061,73 @@ export default function StandardCake() {
                 >
                   {detailModalData.title}
                 </Typography>
-                <FullscreenImageWrapper>
-                  <FullscreenImg
-                    src={detailModalData.image_url[detailModalImgIndex]}
-                    alt={detailModalData.title}
-                  />
-                  {detailModalData.image_url.length > 1 && (
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "300px",
+                  }}
+                >
+                  {detailModalData?.image_url?.length > 0 ? (
                     <>
-                      <ArrowLeft
-                        aria-label="Previous image"
-                        onClick={modalPrevImage}
-                      >
-                        <ChevronLeft />
-                      </ArrowLeft>
-                      <ArrowRight
-                        aria-label="Next image"
-                        onClick={modalNextImage}
-                      >
-                        <ChevronRight />
-                      </ArrowRight>
+                      <img
+                        src={detailModalData.image_url[detailModalImgIndex]}
+                        alt={detailModalData.title}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: "18px",
+                          objectFit: "contain",
+                          userSelect: "none",
+                          pointerEvents: "none",
+                        }}
+                      />
+                      {detailModalData.image_url.length > 1 && (
+                        <>
+                          <IconButton
+                            style={{
+                              position: "absolute",
+                              top: "50%",
+                              left: 10,
+                              transform: "translateY(-50%)",
+                              background: "rgba(255,255,255,0.75)",
+                              boxShadow: "0 4px 10px rgb(0 0 0 / 0.25)",
+                              color: COLORS.primary,
+                              zIndex: 1700,
+                            }}
+                            aria-label="Previous image"
+                            onClick={modalPrevImage}
+                          >
+                            <ChevronLeft />
+                          </IconButton>
+                          <IconButton
+                            style={{
+                              position: "absolute",
+                              top: "50%",
+                              right: 10,
+                              transform: "translateY(-50%)",
+                              background: "rgba(255,255,255,0.75)",
+                              boxShadow: "0 4px 10px rgb(0 0 0 / 0.25)",
+                              color: COLORS.primary,
+                              zIndex: 1700,
+                            }}
+                            aria-label="Next image"
+                            onClick={modalNextImage}
+                          >
+                            <ChevronRight />
+                          </IconButton>
+                        </>
+                      )}
                     </>
+                  ) : (
+                    <CakeFallbackImage>
+                      <span className="icon" role="img" aria-label="cake">
+                        🎂
+                      </span>
+                      <span className="text">No image available</span>
+                    </CakeFallbackImage>
                   )}
-                </FullscreenImageWrapper>
+                </div>
                 <div style={{ marginTop: 24 }}>
                   <Accordion defaultExpanded>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -1088,7 +1138,7 @@ export default function StandardCake() {
                         "No description available."}
                     </AccordionDetails>
                   </Accordion>
-                  <Accordion>
+                  <Accordion defaultExpanded>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       Ingredients
                     </AccordionSummary>
@@ -1098,7 +1148,7 @@ export default function StandardCake() {
                         : "No ingredients available."}
                     </AccordionDetails>
                   </Accordion>
-                  <Accordion>
+                  <Accordion defaultExpanded>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       Weights & Price
                     </AccordionSummary>

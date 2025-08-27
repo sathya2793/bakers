@@ -4,6 +4,10 @@
   padding: 0 20px;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   margin-top: 7%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 60px;
 }
 
 .contact-header {
@@ -39,6 +43,15 @@
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-form button[type="submit"] {
+  align-self: center;
+  margin-top: auto;
+  margin-bottom: 20px;
 }
 
 .form-section {
@@ -448,4 +461,37 @@
   .file-upload-label {
     padding: 30px 20px;
   }
+}
+
+.contact-header {
+  background: linear-gradient(135deg, #096b23 0%, #135218 100%);
+  color: white;
+  padding: 40px 20px;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.error-text {
+  color: #e45444;
+  font-size: 0.9rem;
+  margin-left: 8px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input[type="tel"] {
+  -moz-appearance: textfield;
+}
+
+input[type="tel"]::-webkit-inner-spin-button,
+input[type="tel"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+textarea.finalDescription::placeholder {
+  white-space: pre-line;
 }

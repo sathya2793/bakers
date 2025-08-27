@@ -1,8 +1,7 @@
 import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import Home from './pages/Home.jsx';
 import AboutUs from './pages/AboutUs.jsx';
-import StandardCake from './pages/StandardCake.jsx';
-import CustomisedCake from './pages/CustomisedCake.jsx';
+import CakeCard from './pages/CakeCard.jsx';
 import ContactUs from './pages/ContactUs.jsx';
 import OurProducts from './pages/OurProducts.jsx';
 import Workshop from './pages/Workshop.jsx';
@@ -34,8 +33,7 @@ function App() {
       <Route element={<HeaderRoute />}>
         <Route path="/" element={<Home />} />
         <Route path="/about-us" element={<AboutUs />} />
-        <Route path="/choose-cake/standard-cake" element={<StandardCake />} />
-        <Route path="/choose-cake/customised-cake" element={<CustomisedCake />} />
+        <Route path="/choose-cake" element={<CakeCard />} />
         <Route path="/choose-cake/contact-us" element={<ContactUs />} />
         <Route path="/our-products" element={<OurProducts />} />
         <Route path="/workshop" element={<Workshop />} />

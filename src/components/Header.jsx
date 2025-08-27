@@ -52,8 +52,8 @@ const Header = () => {
           <div className="dropdown">
             <span>Choose Your Cake</span>
             <div className="dropdown-content">
-              <Link to="/choose-cake/standard-cake">Standard Cake</Link>
-              <Link to="/choose-cake/customised-cake">Customised Cake</Link>
+              <Link to={{ pathname: '/choose-cake', search: '?customizable=false' }}>Standard Cake</Link>
+              <Link to={{ pathname: '/choose-cake', search: '?customizable=true' }}>Customised Cake</Link>
               <Link to="/choose-cake/contact-us">Contact Us</Link>
             </div>
           </div>
@@ -70,8 +70,8 @@ const Header = () => {
         <div className={`mobile-fullscreen ${menuOpen ? 'open' : 'closing'}`}>
           <div className="mobile-menu-links">
             <Link to="/about-us" onClick={toggleMenu}>About Us</Link>
-            <Link to="/choose-cake/standard-cake" onClick={toggleMenu}>Standard Cake</Link>
-            <Link to="/choose-cake/customised-cake" onClick={toggleMenu}>Customised Cake</Link>
+            <Link to={{ pathname: '/choose-cake', search: '?customizable=false' }}  onClick={toggleMenu}>Standard Cake</Link>
+            <Link to={{ pathname: '/choose-cake', search: '?customizable=true' }}  onClick={toggleMenu}>Customised Cake</Link>
             <Link to="/choose-cake/contact-us" onClick={toggleMenu}>Contact Us</Link>
             <Link to="/our-products" onClick={toggleMenu}>Our Products</Link>
             <Link to="/workshop" onClick={toggleMenu}>Workshop</Link>

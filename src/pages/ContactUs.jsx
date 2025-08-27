@@ -1,11 +1,18 @@
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { submitCakeRequest } from "../utils/apiWrapper";
 import {
   showCompactSuccess,
   showCompactError,
-  showCompactWarning,
+  showCompactWarning
 } from "../utils/notifications";
 import "./ContactUs.css";
+
+const COLORS = {
+  primary: "#8b4513",
+  accent: "#faad59",
+  accentDark: "#e9af73",
+};
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -17,10 +24,11 @@ const ContactUs = () => {
     event: "",
     theme: "",
     budget: "",
-    eggless: "",
+    eggless: "Egg/Eggless",
     eventDate: "",
     customEvent: "",
     finalDescription: "",
+    honeypot: "",
   });
   const [cart, setCart] = useState(() => {
     try {
@@ -30,139 +38,103 @@ const ContactUs = () => {
       return [];
     }
   });
+  const [errors, setErrors] = useState({});
+  const [success, setSuccess] = useState(false);
 
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
-  const [imageDescriptions, setImageDescriptions] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const [editIdx, setEditIdx] = useState(null);
-  const [editComment, setEditComment] = useState("");
-
-  const validateFile = (file) => {
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
-      showCompactError(
-        `"${file.name}" is not a valid image file. Please upload JPG, PNG, or WebP images.`
-      );
-      return false;
-    }
-
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      showCompactError(
-        `"${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(
-          1
-        )}MB). Maximum size is 5MB.`
-      );
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-
-    if (imagePreviews.length + files.length > 10) {
-      showCompactWarning(
-        "Maximum 10 images allowed. Some files will be ignored."
-      );
-    }
-
-    const validFiles = files.filter(validateFile);
-    const filesToAdd = validFiles.slice(0, 10 - imagePreviews.length);
-
-    // if (filesToAdd.length < files.length) {
-    //   showCompactWarning(`Only ${filesToAdd} images were added due to limits.`);
-    // }
-
-    const newPreviews = filesToAdd.map((file) => ({
-      file,
-      url: URL.createObjectURL(file),
-    }));
-
-    // Add empty descriptions for new images
-    const newDescriptions = new Array(filesToAdd.length).fill("");
-
-    setSelectedFiles((prev) => [...prev, ...filesToAdd]);
-    setImagePreviews((prev) => [...prev, ...newPreviews]);
-    setImageDescriptions((prev) => [...prev, ...newDescriptions]);
-
-    if (filesToAdd.length > 0) {
-      showCompactSuccess(`${filesToAdd.length} image(s) added successfully`);
-    }
-
-    e.target.value = "";
-  };
-
-  const handleRemoveImage = (index) => {
-    URL.revokeObjectURL(imagePreviews[index].url);
-
-    const updatedPreviews = imagePreviews.filter((_, i) => i !== index);
-    const updatedFiles = selectedFiles.filter((_, i) => i !== index);
-    const updatedDescriptions = imageDescriptions.filter((_, i) => i !== index);
-
-    setImagePreviews(updatedPreviews);
-    setSelectedFiles(updatedFiles);
-    setImageDescriptions(updatedDescriptions);
-    showCompactSuccess("Image removed");
-  };
-
-  const handleImageDescriptionChange = (index, description) => {
-    const updatedDescriptions = [...imageDescriptions];
-    updatedDescriptions[index] = description;
-    setImageDescriptions(updatedDescriptions);
-  };
+  // Sanitize input to prevent script injection
+  const sanitize = (val) => DOMPurify.sanitize(val);
 
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: sanitize(value) }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const validateForm = () => {
-    const errors = [];
-
-    if (!formData.name.trim()) errors.push("Name is required");
-    if (!formData.mobile.trim()) errors.push("Mobile number is required");
-    if (!formData.email.trim()) errors.push("Email is required");
-    if (!formData.location.trim()) errors.push("Location is required");
-    if (!formData.event.trim()) errors.push("Event is required");
-    if (!formData.eventDate.trim()) errors.push("Event date is required");
-
-    // Indian mobile number validation
-    const mobileRegex = /^[6-9]\d{9}$/;
-    if (formData.mobile && !mobileRegex.test(formData.mobile)) {
-      errors.push(
-        "Please enter a valid Indian mobile number (10 digits starting with 6-9)"
-      );
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email)) {
-      errors.push("Please enter a valid email address");
-    }
-
-    if (formData.eventDate) {
-      const selectedDate = new Date(formData.eventDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (selectedDate < today) {
-        errors.push("Event date cannot be in the past");
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
+    const [imageDescriptions, setImageDescriptions] = useState([]);
+    const [loading, setLoading] = useState(false);
+  
+    const [editIdx, setEditIdx] = useState(null);
+    const [editComment, setEditComment] = useState("");
+  
+    const validateFile = (file) => {
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+      if (!allowedTypes.includes(file.type)) {
+        showCompactError(
+          `"${file.name}" is not a valid image file. Please upload JPG, PNG, or WebP images.`
+        );
+        return false;
       }
-    }
+  
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        showCompactError(
+          `"${file.name}" is too large (${(file.size / 1024 / 1024).toFixed(
+            1
+          )}MB). Maximum size is 5MB.`
+        );
+        return false;
+      }
+  
+      return true;
+    };
+  
+    const handleImageChange = (e) => {
+      const files = Array.from(e.target.files);
+  
+      if (imagePreviews.length + files.length > 10) {
+        showCompactWarning(
+          "Maximum 10 images allowed. Some files will be ignored."
+        );
+      }
+  
+      const validFiles = files.filter(validateFile);
+      const filesToAdd = validFiles.slice(0, 10 - imagePreviews.length);
+  
+      // if (filesToAdd.length < files.length) {
+      //   showCompactWarning(`Only ${filesToAdd} images were added due to limits.`);
+      // }
+  
+      const newPreviews = filesToAdd.map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+      }));
+  
+      // Add empty descriptions for new images
+      const newDescriptions = new Array(filesToAdd.length).fill("");
+  
+      setSelectedFiles((prev) => [...prev, ...filesToAdd]);
+      setImagePreviews((prev) => [...prev, ...newPreviews]);
+      setImageDescriptions((prev) => [...prev, ...newDescriptions]);
+  
+      if (filesToAdd.length > 0) {
+        showCompactSuccess(`${filesToAdd.length} image(s) added successfully`);
+      }
+  
+      e.target.value = "";
+    };
+  
+    const handleRemoveImage = (index) => {
+      URL.revokeObjectURL(imagePreviews[index].url);
+  
+      const updatedPreviews = imagePreviews.filter((_, i) => i !== index);
+      const updatedFiles = selectedFiles.filter((_, i) => i !== index);
+      const updatedDescriptions = imageDescriptions.filter((_, i) => i !== index);
+  
+      setImagePreviews(updatedPreviews);
+      setSelectedFiles(updatedFiles);
+      setImageDescriptions(updatedDescriptions);
+      showCompactSuccess("Image removed");
+    };
+  
+    const handleImageDescriptionChange = (index, description) => {
+      const updatedDescriptions = [...imageDescriptions];
+      updatedDescriptions[index] = description;
+      setImageDescriptions(updatedDescriptions);
+    };
 
-    if (formData.event === "Other" && !formData.customEvent.trim()) {
-      errors.push("Please specify the custom event");
-    }
-
-    return errors;
-  };
-
-  const handleEditClick = (idx, currentComment) => {
+      const handleEditClick = (idx, currentComment) => {
     setEditIdx(idx);
     setEditComment(currentComment || "");
   };
@@ -195,46 +167,68 @@ const ContactUs = () => {
     showCompactSuccess("Selected Cake removed from selection");
   };
 
-  // On form submit, also clear cart block after submission
+  // Basic validation logic
+  const validateForm = () => {
+    let errs = {};
+    if (!formData.name.trim()) errs.name = "Name is required";
+    if (!formData.mobile.trim()) errs.mobile = "Mobile is required";
+    else if (!/^[6-9]\d{9}$/.test(formData.mobile))
+      errs.mobile = "Enter valid 10-digit Indian mobile number";
+    if (!formData.email.trim()) errs.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()))
+      errs.email = "Enter a valid email";
+    if (!formData.location.trim()) errs.location = "Location is required";
+    if (!formData.pincode.trim()) errs.pincode = "Pincode is required";
+    const pincodeRegex = /^[1-9][0-9]{5}$/;
+    if (formData.pincode && !pincodeRegex.test(formData.pincode)) {
+      errs.pincode = "Please enter a valid 6-digit Indian pincode";
+    }
+    if (!formData.event.trim()) errs.event = "Event type is required";
+    if (!formData.eventDate.trim()) errs.eventDate = "Event date is required";
+    else if (new Date(formData.eventDate) < new Date().setHours(0, 0, 0, 0))
+      errs.eventDate = "Event date cannot be in the past";
+    if (formData.event === "Other" && !formData.customEvent.trim())
+      errs.customEvent = "Please specify your event";
+    if (formData.honeypot.trim() !== "") {
+      showCompactError("Spam detected, submission blocked.");
+      return { spam: true };
+    }
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const validationErrors = validateForm();
-    if (validationErrors.length > 0) {
-      showCompactError(
-        `Please fix the following: ${validationErrors.join(", ")}`
-      );
+    const valid = validateForm();
+    if (!valid) {
+      if (valid.spam) return;
+      showCompactError("Please fix errors before submitting.");
       return;
     }
 
     setLoading(true);
-
-    const finalEvent =
-      formData.event === "Other" ? formData.customEvent : formData.event;
-
-    const formPayload = new FormData();
-    formPayload.append("name", formData.name.trim());
-    formPayload.append("email", formData.email.trim());
-    formPayload.append("mobile", formData.mobile.trim());
-    formPayload.append("location", formData.location.trim());
-    formPayload.append("pincode", formData.pincode.trim());
-    formPayload.append("event", finalEvent);
-    formPayload.append("eventDate", formData.eventDate);
-    formPayload.append("theme", formData.theme.trim());
-    formPayload.append("budget", formData.budget);
-    formPayload.append("eggless", formData.eggless);
-    formPayload.append("finalDescription", formData.finalDescription.trim());
-    if (cart) {
-      console.log("🚀 ~ handleSubmit ~ cart:", cart);
-      formPayload.append("cart", JSON.stringify(cart));
-    }
-    formPayload.append("imageDescriptions", JSON.stringify(imageDescriptions));
-    selectedFiles.forEach((file) => {
-      formPayload.append("images", file);
-    });
-
     try {
-      await submitCakeRequest(formPayload);
+      const payload = new FormData();
+      const finalEvent = formData.event === "Other" ? formData.customEvent : formData.event;
+      for (const key of Object.keys(formData)) {
+        if (key !== "honeypot") {
+          if (key === "event") {
+            payload.append(key, finalEvent);
+          } else {
+            payload.append(key, formData[key]);
+          }
+        }
+      }
+      if (cart.length) {
+        payload.append("cart", JSON.stringify(cart));
+      }
+
+      await submitCakeRequest(payload);
+      showCompactSuccess("Thank you for your request! Redirecting to home...");
+      setSuccess(true);
+      setTimeout(() => window.location.href = "/", 10000);
+
       setFormData({
         name: "",
         mobile: "",
@@ -244,63 +238,41 @@ const ContactUs = () => {
         event: "",
         theme: "",
         budget: "",
-        eggless: "",
+        eggless: "Egg/Eggless",
         eventDate: "",
         customEvent: "",
         finalDescription: "",
+        honeypot: "",
       });
       setCart([]);
-      window.localStorage.removeItem("cake_cart");
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
-      setSelectedFiles([]);
-      setImagePreviews([]);
-      setImageDescriptions([]);
-    } catch (error) {
-      console.error("Submission error:", error);
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      showCompactError("Failed to submit; please try again.");
+      console.error(err);
     }
+    setLoading(false);
   };
-
-  // Cleanup on component unmount
-  useState(() => {
-    return () => {
-      imagePreviews.forEach((preview) => {
-        if (preview.url.startsWith("blob:")) {
-          URL.revokeObjectURL(preview.url);
-        }
-      });
-    };
-  }, []);
 
   return (
     <div className="contact-container">
       {loading && (
         <div className="loading-overlay">
           <div className="spinner"></div>
-          <p>Submitting your custom cake request...</p>
+          <p>Submitting your request...</p>
         </div>
       )}
 
-      <div className="contact-header">
+      <div className="contact-header" style={{ background: COLORS.primary }}>
         <div className="header-icon">🎂</div>
         <h1>Custom Cake Design Request</h1>
-        <p>
-          Share your dream cake ideas with us! Upload inspiration images and
-          describe your vision.
-        </p>
+        <p>Share your dream cake ideas! Upload images and describe your vision.</p>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="contact-form"
-        onKeyDown={(e) => {
+      <form onSubmit={handleSubmit}  className="contact-form" noValidate onKeyDown={(e) => {
           if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
             e.preventDefault();
           }
-        }}
-      >
-        {/* Personal Information */}
+        }}>
+ {/* Personal Information */}
         <div className="form-section">
           <h3 className="section-title">
             <span className="section-icon">👤</span>
@@ -323,6 +295,7 @@ const ContactUs = () => {
                   }
                 }}
               />
+              {errors.name && <span className="error-text"> {errors.name}</span>}
             </div>
 
             <div className="form-group">
@@ -336,6 +309,7 @@ const ContactUs = () => {
                   type="number"
                   name="mobile"
                   required
+                  min="0"
                   pattern="[6-9][0-9]{9}"
                   onChange={handleChange}
                   value={formData.mobile}
@@ -348,6 +322,7 @@ const ContactUs = () => {
                   }}
                 />
               </div>
+              {errors.mobile && <span className="error-text"> {errors.mobile}</span>}
             </div>
           </div>
 
@@ -367,6 +342,7 @@ const ContactUs = () => {
                   }
                 }}
               />
+              {errors.email && <span className="error-text"> {errors.email}</span>}
             </div>
 
             <div className="form-group">
@@ -384,6 +360,7 @@ const ContactUs = () => {
                   }
                 }}
               />
+              {errors.location && <span className="error-text"> {errors.location}</span>}
             </div>
 
             <div className="form-group">
@@ -391,6 +368,7 @@ const ContactUs = () => {
               <input
                 type="number"
                 name="pincode"
+                min="0"
                 required
                 onChange={handleChange}
                 value={formData.pincode}
@@ -401,6 +379,7 @@ const ContactUs = () => {
                   }
                 }}
               />
+              {errors.pincode && <span className="error-text"> {errors.pincode}</span>}
             </div>
           </div>
         </div>
@@ -430,6 +409,7 @@ const ContactUs = () => {
                 <option value="Graduation">Graduation</option>
                 <option value="Other">Other</option>
               </select>
+              {errors.event && <span className="error-text"> {errors.event}</span>}
             </div>
 
             <div className="form-group">
@@ -442,12 +422,13 @@ const ContactUs = () => {
                 required
                 onChange={handleChange}
               />
+              {errors.eventDate && <span className="error-text"> {errors.eventDate}</span>}
             </div>
           </div>
 
           {formData.event === "Other" && (
             <div className="form-group">
-              <label>Please specify the Event *</label>
+              <label>Please specify the Event * {errors.customEvent && <span className="error-text"> {errors.customEvent}</span>}</label>
               <textarea
                 name="customEvent"
                 placeholder="Describe your special event..."
@@ -488,9 +469,10 @@ const ContactUs = () => {
                 onChange={handleChange}
                 value={formData.eggless}
               >
-                <option value="">Select Preference</option>
-                <option value="Egg">With Egg</option>
-                <option value="Eggless">Eggless</option>
+              <option value="">Select Preference</option>
+              <option value="Egg/Eggless">Egg/Eggless</option>
+              <option value="Egg">Egg</option>
+              <option value="Eggless">Eggless</option>
               </select>
             </div>
           </div>
@@ -512,7 +494,8 @@ const ContactUs = () => {
           </div>
         </div>
 
-        {/* Cart Block styled as form-section */}
+
+               {/* Cart Block styled as form-section */}
         {cart.length > 0 && (
           <div className="form-section cart-block">
             <h3
@@ -725,7 +708,8 @@ const ContactUs = () => {
             <label>Describe Your Dream Cake</label>
             <textarea
               name="finalDescription"
-              placeholder="Combine all your ideas here! Describe how you want your final cake to look, including size, colors, decorations, flavors, and any special requirements..."
+              className="finalDescription"
+              placeholder={`Combine all your ideas here!\nDescribe how you want your final cake to look, including size, colors, decorations, flavors, and any special requirements...`}
               rows="5"
               value={formData.finalDescription}
               onChange={handleChange}
@@ -738,18 +722,45 @@ const ContactUs = () => {
           </div>
         </div>
 
-        <button type="submit" className="submit-btn" disabled={loading}>
-          {loading ? (
-            <>
-              <span className="btn-spinner"></span>
-              Submitting Request...
-            </>
-          ) : (
-            <>
-              <span className="btn-text">🎂 Submit Custom Cake Request</span>
-            </>
-          )}
+        {/* Honeypot (hidden) */}
+        <input
+          type="text"
+          name="honeypot"
+          value={formData.honeypot}
+          onChange={handleChange}
+          style={{ display: "none" }}
+          tabIndex={-1}
+          autoComplete="off"
+        />
+
+        <p style={{ fontStyle: "italic", color: "#555", margin: "1rem", textAlign: "center" }}>
+          Thank you for sharing your vision! After submitting, you will receive a confirmation email at the address provided. Please check your inbox, and if it’s not there, kindly look in your spam or junk folder.
+        </p>
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+              backgroundColor: COLORS.primary,
+              color: "white",
+              padding: "12px 28px",
+              border: "none",
+              borderRadius: "16px",
+              fontSize: "1.2rem",
+              cursor: loading ? "not-allowed" : "pointer",
+              marginTop: "1.5rem",
+              display: "block",
+              marginLeft: "auto",
+              marginRight: "auto",
+          }}>
+          {loading ? "Submitting..." : "🎂 Submit Request"}
         </button>
+
+        {success && (
+          <p style={{ color: "#35b257", marginTop: "1rem", fontWeight: "600", textAlign: "center" }}>
+            Thank you for your request! Redirecting to home...
+          </p>
+        )}
       </form>
     </div>
   );

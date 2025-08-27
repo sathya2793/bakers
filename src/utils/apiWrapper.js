@@ -34,14 +34,9 @@ export const fetchAllProducts = async () => {
 };
 
 // Separate fetch calls for standard or customised cakes
-export const fetchStandardCakes = async () => {
+export const fetchAllCakes = async () => {
   const products = await fetchAllProducts();
-  return products.filter(product => product.customizable === false);
-};
-
-export const fetchCustomisedCakes = async () => {
-  const products = await fetchAllProducts();
-  return products.filter(product => product.customizable === true);
+  return products;
 };
 
 const getAuthHeaders = () => {
