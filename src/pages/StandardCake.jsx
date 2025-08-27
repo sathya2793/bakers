@@ -23,6 +23,7 @@ import CartDrawer from "../components/CartDrawer";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { fetchStandardCakes } from "../utils/apiWrapper";
+import { useLocation } from "react-router-dom";
 
 const CARD_WIDTH = 320;
 const CARD_HEIGHT = 420;
@@ -366,6 +367,11 @@ const ArrowRight = styled(ArrowButton)`
   right: 10px !important;
 `;
 
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
+
 export default function StandardCake() {
   const [cakes, setCakes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -394,6 +400,9 @@ export default function StandardCake() {
   // For mobile filter overlay open
   const [filterOpen, setFilterOpen] = useState(false);
 
+  const query = useQuery();
+
+
   // Fetch cakes once
   useEffect(() => {
     (async () => {
@@ -402,6 +411,10 @@ export default function StandardCake() {
       try {
         const data = await fetchStandardCakes();
         setCakes(data);
+        const flavourFilter = query.get("flavour");
+        const eventFilter = query.get("event");
+        if (flavourFilter) setFlavour([flavourFilter]);
+        if (eventFilter) setEvent([eventFilter]);
       } catch (e) {
         setError(e.message || "Failed to load cakes");
       }

@@ -13,7 +13,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   // Allow only these emails to access the admin dashboard
-  const allowedEmails = ['sathya2793@gmail.com', 'vaniseatsllp@gmail.com'];
+  const allowedEmails = ['sathya2793@gmail.com', 'vaniseatsllp@gmail.com' , 'Brandzondigital@gmail.com'];
 
   return (
     <div className="login-wrapper">
