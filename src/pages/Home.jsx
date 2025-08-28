@@ -15,20 +15,185 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import layer_cake from "../assets/layer_cake.png";
 import {getCustomCardImageAPICall} from "../utils/apiWrapper";
+  import PinterestCarousel from "../components/PinterestCarousel";
 
 const Home = () => {
   useEffect(() => {
     AOS.init({ duration: 1000 });
   }, []);
 
-  const products = [
-    { name: 'Chocolate Truffle', price: '₹850', veg: 'Veg', img: chocolate_cakes },
-    { name: 'Red Velvet', price: '₹900', veg: 'Egg', img: red_velvet_cakes },
-    { name: 'Fresh Fruit Cake', price: '₹800', veg: 'Veg', img: fruite_cake },
-    { name: 'Chocolate Truffle', price: '₹850', veg: 'Veg', img: chocolate_cakes },
-    { name: 'Red Velvet', price: '₹900', veg: 'Egg', img: red_velvet_cakes },
-    { name: 'Fresh Fruit Cake', price: '₹800', veg: 'Veg', img: fruite_cake },
-  ];
+
+
+const flavours = [
+  {
+    name: "Chocolate",
+    img: chocolate_cakes,
+    color: "#6f4e37",
+    description: "Rich and creamy chocolate cake with smooth ganache."
+  },
+  {
+    name: "Red Velvet",
+    img: red_velvet_cakes,
+    color: "#c1272d",
+    description: "Classic red velvet with tangy cream cheese frosting."
+  },
+  {
+    name: "Fruit",
+    img: fruite_cake,
+    color: "#27ae60",
+    description: "Fresh fruit cake loaded with seasonal fruits."
+  },
+  {
+    name: "Vanilla",
+    img: chocolate_cakes,
+    color: "#f3e5ab",
+    description: "Light vanilla sponge with buttery vanilla frosting."
+  },
+  {
+    name: "Salted Caramel",
+    img: red_velvet_cakes,
+    color: "#bf8f4f",
+    description: "Sweet and salty caramel layers with smooth cream."
+  },
+  {
+    name: "Lemon",
+    img: fruite_cake,
+    color: "#f7ec6e",
+    description: "Tangy lemon cake with zesty lemon curd filling."
+  },
+  {
+    name: "Coffee",
+    img: chocolate_cakes,
+    color: "#4b3832",
+    description: "Aromatic coffee-infused cake with cream frosting."
+  },
+  {
+    name: "Buttercream",
+    img: red_velvet_cakes,
+    color: "#f2d388",
+    description: "Soft buttercream frosting with light sponge base."
+  },
+  {
+    name: "Strawberry",
+    img: fruite_cake,
+    color: "#ff6384",
+    description: "Fresh strawberry cake with whipped cream layers."
+  },
+];
+
+const events = [
+  {
+    name: "Birthday",
+    img: custom1,
+    color: "#f39c12",
+    description: "Celebrate your special day with a custom birthday cake."
+  },
+  {
+    name: "Wedding",
+    img: custom2,
+    color: "#c0392b",
+    description: "Elegant wedding cakes tailored for your perfect day."
+  },
+  {
+    name: "Baby Shower",
+    img: custom3,
+    color: "#3498db",
+    description: "Sweet and charming cakes ideal for baby showers."
+  },
+  {
+    name: "Anniversary",
+    img: custom1,
+    color: "#8e44ad",
+    description: "Mark your milestone with a beautiful anniversary cake."
+  },
+  {
+    name: "Graduation",
+    img: custom2,
+    color: "#27ae60",
+    description: "Celebrate success with a graduation themed cake."
+  },
+  {
+    name: "Retirement",
+    img: custom3,
+    color: "#16a085",
+    description: "Commemorate retirement with a special custom cake."
+  },
+  {
+    name: "Corporate",
+    img: custom1,
+    color: "#34495e",
+    description: "Professional cake designs for corporate events."
+  },
+  {
+    name: "Holiday",
+    img: custom2,
+    color: "#e67e22",
+    description: "Festive cake designs perfect for the holiday season."
+  },
+  {
+    name: "Engagement",
+    img: custom3,
+    color: "#d35400",
+    description: "Celebrate love with elegant engagement cakes."
+  },
+];
+
+const categories = [
+  {
+    name: "Designer Cakes",
+    img: custom1,
+    color: "#9b59b6",
+    description: "Artistically crafted cakes with unique designs."
+  },
+  {
+    name: "PhotoSheet Cakes",
+    img: custom2,
+    color: "#2980b9",
+    description: "Personalized photo cakes to capture memorable moments."
+  },
+  {
+    name: "Theme Cakes",
+    img: custom3,
+    color: "#e67e22",
+    description: "Cakes designed around your favorite themes."
+  },
+  {
+    name: "Kids Birthday Cakes",
+    img: custom1,
+    color: "#e84393",
+    description: "Fun and colorful cakes perfect for children’s parties."
+  },
+  {
+    name: "Wedding Cakes",
+    img: custom2,
+    color: "#d35400",
+    description: "Sophisticated cakes for all wedding styles."
+  },
+  {
+    name: "Anniversary Cakes",
+    img: custom3,
+    color: "#f39c12",
+    description: "Celebrate anniversaries with elegant cake designs."
+  },
+  {
+    name: "Custom Orders",
+    img: custom1,
+    color: "#1abc9c",
+    description: "Customized cakes made just the way you want."
+  },
+  {
+    name: "Seasonal Specials",
+    img: custom2,
+    color: "#2ecc71",
+    description: "Limited time cakes inspired by seasonal ingredients."
+  },
+  {
+    name: "Cupcakes & Treats",
+    img: custom3,
+    color: "#e74c3c",
+    description: "Delicious cupcakes and treats for every occasion."
+  },
+];
 
   const [customProducts, setCustomProducts] = useState([
     { img: chocolate_cakes }, { img: red_velvet_cakes }, { img: fruite_cake }
@@ -129,15 +294,9 @@ const Home = () => {
       </div> */}
     </div>
 
-      <section className="section occasion-section" data-aos="fade-up">
-        <h2>Treats For Any Occasion</h2>
-        <ProductCarousels products={occasionProducts} />
-      </section>
-
-      <section className="section products-section" data-aos="fade-up">
-        <h2>Best Selling Products</h2>
-        <ProductCarousels products={products} />
-      </section>
+     <PinterestCarousel title="Choose by Flavour" items={flavours} />
+      {/* <PinterestCarousel title="Choose by Event" items={events} /> */}
+      <PinterestCarousel title="Choose by Category" items={categories} />
 
       <WhyChooseUs />
 
