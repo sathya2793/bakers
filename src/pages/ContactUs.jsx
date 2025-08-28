@@ -7,6 +7,7 @@ import {
   showCompactWarning
 } from "../utils/notifications";
 import "./ContactUs.css";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy"; 
 
 const COLORS = {
   primary: "#8b4513",
@@ -30,6 +31,7 @@ const ContactUs = () => {
     finalDescription: "",
     honeypot: "",
   });
+  const [copied, setCopied] = useState(false);
   const [cart, setCart] = useState(() => {
     try {
       const stored = window.localStorage.getItem("cake_cart");
@@ -40,6 +42,7 @@ const ContactUs = () => {
   });
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
+  const [successData, setSuccessData] = useState(null);
 
   // Sanitize input to prevent script injection
   const sanitize = (val) => DOMPurify.sanitize(val);
@@ -48,6 +51,18 @@ const ContactUs = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: sanitize(value) }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const generateReference = () => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    const H = String(now.getHours()).padStart(2, "0");
+    const M = String(now.getMinutes()).padStart(2, "0");
+    const S = String(now.getSeconds()).padStart(2, "0");
+    const mobile = formData.mobile.replace(/\D/g, "");
+    return `${y}${m}${d}${H}${M}${S}_${mobile}`;
   };
 
     const [selectedFiles, setSelectedFiles] = useState([]);
@@ -197,6 +212,16 @@ const ContactUs = () => {
     return Object.keys(errs).length === 0;
   };
 
+  const copyRefToClipboard = async () => {
+  try {
+    await navigator.clipboard.writeText(successData.refNum);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  } catch (err) {
+    showCompactError("Failed to copy reference number");
+  }
+};
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -209,6 +234,7 @@ const ContactUs = () => {
 
     setLoading(true);
     try {
+      const refNum = generateReference();
       const payload = new FormData();
       const finalEvent = formData.event === "Other" ? formData.customEvent : formData.event;
       for (const key of Object.keys(formData)) {
@@ -220,14 +246,15 @@ const ContactUs = () => {
           }
         }
       }
+      payload.append("reference", refNum);
       if (cart.length) {
         payload.append("cart", JSON.stringify(cart));
       }
 
       await submitCakeRequest(payload);
-      showCompactSuccess("Thank you for your request! Redirecting to home...");
+      showCompactSuccess("Cake request has been submitted successfully!");
       setSuccess(true);
-      setTimeout(() => window.location.href = "/", 10000);
+      setSuccessData({ refNum });
 
       setFormData({
         name: "",
@@ -251,6 +278,108 @@ const ContactUs = () => {
     }
     setLoading(false);
   };
+
+  const handleNewRequest = () => {
+    setSuccessData(null);
+  };
+
+  const handleGoHome = () => {
+    window.location.href = "/";
+  };
+
+   if (successData) {
+    return (
+      <div
+  className="contact-container"
+  style={{
+    minHeight: "60vh",
+    padding: "60px 20px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
+    gap: "20px",
+    overflow: "hidden",
+  }}
+>
+  <div style={{ fontSize: "4rem", color: COLORS.accent, userSelect: "none" }} aria-hidden="true">
+    🎂
+  </div>
+  <h2 style={{ color: COLORS.primary, fontWeight: "700" }}>
+    Your Request Has Been Submitted!
+  </h2>
+  <p style={{ fontSize: "1.2rem", fontWeight: "600" }}>
+    Reference Number:
+     <span
+        role="button"
+        tabIndex={0}
+        onClick={copyRefToClipboard}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') copyRefToClipboard();
+        }}
+        title={copied ? 'Copied!' : 'Click to copy'}
+        aria-label="Copy reference number"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          cursor: 'pointer',
+          marginLeft: 8,
+          color: COLORS.primary,
+          userSelect: 'all',
+          fontSize: '1.6rem',
+          fontWeight: '900',
+          letterSpacing: '2px',
+        }}
+      >
+        {successData.refNum}
+       <ContentCopyIcon style={{ fontSize: 20, marginLeft: 6, color: copied ? COLORS.accent : COLORS.primary }} />
+      </span>
+  </p>
+  <p style={{ fontSize: "1rem", color: "#555", maxWidth: "450px" }}>
+    Thank you for sharing your vision!
+  </p>
+  <p style={{ fontSize: "1rem", color: "#555", maxWidth: "450px" }}>
+    Note: A confirmation email has been sent to your provided email address.
+    Please check your inbox, and if you don't find it soon, kindly check the spam or junk folder.
+  </p>
+  <div style={{ display: "flex", gap: "15px", marginTop: "30px" }}>
+    <button
+      onClick={handleGoHome}
+      style={{
+        padding: "10px 30px",
+        backgroundColor: COLORS.primary,
+        color: "#fff",
+        border: "none",
+        borderRadius: "8px",
+        fontSize: "1rem",
+        fontWeight: "600",
+        cursor: "pointer",
+        minWidth: "130px",
+      }}
+    >
+      Go to Home
+    </button>
+    <button
+      onClick={handleNewRequest}
+      style={{
+        padding: "10px 30px",
+        backgroundColor: COLORS.accent,
+        color: "#fff",
+        border: "none",
+        borderRadius: "8px",
+        fontSize: "1rem",
+        fontWeight: "600",
+        cursor: "pointer",
+        minWidth: "130px",
+      }}
+    >
+      New Request
+    </button>
+  </div>
+</div>
+    );
+  }
 
   return (
     <div className="contact-container">
@@ -733,9 +862,9 @@ const ContactUs = () => {
           autoComplete="off"
         />
 
-        <p style={{ fontStyle: "italic", color: "#555", margin: "1rem", textAlign: "center" }}>
+        {/* <p style={{ fontStyle: "italic", color: "#555", margin: "1rem", textAlign: "center" }}>
           Thank you for sharing your vision! After submitting, you will receive a confirmation email at the address provided. Please check your inbox, and if it’s not there, kindly look in your spam or junk folder.
-        </p>
+        </p> */}
 
         <button
           type="submit"
@@ -755,12 +884,6 @@ const ContactUs = () => {
           }}>
           {loading ? "Submitting..." : "🎂 Submit Request"}
         </button>
-
-        {success && (
-          <p style={{ color: "#35b257", marginTop: "1rem", fontWeight: "600", textAlign: "center" }}>
-            Thank you for your request! Redirecting to home...
-          </p>
-        )}
       </form>
     </div>
   );
